@@ -1,27 +1,43 @@
 import static org.junit.Assert.*;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 
-public class BoardTest {
-
-    @Before
-    public void setUp() throws Exception {
-    }
-
-    @After
-    public void tearDown() throws Exception {
-    }
-
+public class BoardTest { 
     @Test
-    public void testBoard() {
-        fail("Not yet implemented");
+    public void testZeroDimension() {
+        Board board = new Board(new int[0][0]); 
+        assertEquals(0, board.dimension());
     }
-
+    
     @Test
     public void testDimension() {
-        fail("Not yet implemented");
+        int N = 1;
+        Board board = new Board(new int[N][N]); 
+        assertEquals(N, board.dimension());
+        
+        N = 10;
+        board = new Board(new int[N][N]); 
+        assertEquals(N, board.dimension());
+    }
+    
+    @Test
+    public void testZeroHamming() {
+        Board board = new Board(new int[0][0]); 
+        assertEquals(0, board.hamming());
+    }
+    
+    @Test
+    public void testOneHammingNotInPosition() {
+        int[][] blocks ={{2}};
+        Board board = new Board(blocks);
+        assertEquals(1, board.hamming());
+    }
+    
+    @Test
+    public void testOneHammingInPosition() {
+        int[][] blocks ={{1}};
+        Board board = new Board(blocks);
+        assertEquals(1, board.hamming());
     }
 }

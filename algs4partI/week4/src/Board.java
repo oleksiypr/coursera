@@ -57,9 +57,9 @@ public class Board {
         
         hamming = 0;
         for (int i = 0; i < N; i++)
-        for (int j = 0; j < N; j++)
+        for (int j = 0; j < N; j++) {
             if (number(i, j) !=  blocks[i][j]) hamming++;
-        
+        }
         return hamming;
     }
     
@@ -75,12 +75,9 @@ public class Board {
         for (int j = 0; j < N; j++) {
             int n = blocks[i][j];
             int di = Math.abs(i - i(n));
-            int dj = Math.abs(j - j(n));
-            
+            int dj = Math.abs(j - j(n));            
             manhattan += di + dj;
         }
-            
-        
         return manhattan;
     }   
     
@@ -92,8 +89,7 @@ public class Board {
         for (int i = 0; i < N; i++)
         for (int j = 0; j < N; j++) {
             if (blocks[i][j] != number(i, j)) return false;
-        }
-        
+        }    
         return true;
     }                
     
@@ -102,8 +98,18 @@ public class Board {
      * @return new board that is obtained by exchanging two adjacent blocks in the same row
      */
     public Board twin() {
-        //TODO
-        return null;
+        if (N < 2) return new Board(blocks);
+        
+        int i = StdRandom.uniform(0, N);
+        int j = StdRandom.uniform(0, N);
+        while (blocks[i][j] == 0) j = StdRandom.uniform(0, N);
+        if (hasNeighbour(i, j, LEFT)) {
+            return swap(i, j, LEFT);
+        } else if (hasNeighbour(i, j, RIGHT)) {
+            return swap(i, j, RIGHT);
+        } else {
+            return twin();
+        }
     }       
    
     /**
@@ -168,10 +174,10 @@ public class Board {
     
     private boolean hasNeighbour(int i, int j, int direction) {
         switch (direction) {
-            case DOWN:  return (i < N - 1);
-            case UP:    return (i > 0);
-            case RIGHT: return (j < N - 1);
-            case LEFT:  return (j > 0);
+            case DOWN:  return ((i < N - 1) && (blocks[i + 1][j] != BLANK));
+            case UP:    return ((i > 0)     && (blocks[i - 1][j] != BLANK));
+            case RIGHT: return ((j < N - 1) && (blocks[i][j + 1] != BLANK));
+            case LEFT:  return ((j > 0)     && (blocks[i][j - 1] != BLANK));
             default:    throw new IllegalArgumentException("Unknown direction: " + direction);
         }
     }
@@ -215,6 +221,7 @@ public class Board {
         }
         StdOut.println();
         
+        StdOut.println("original board:");
         StdOut.println(board);
         StdOut.println();
      }
