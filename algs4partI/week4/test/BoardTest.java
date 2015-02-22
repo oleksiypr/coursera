@@ -36,8 +36,8 @@ public class BoardTest {
     
     @Test
     public void testOneHammingInPosition() {
-        int[][] blocks ={{1}};
+        int[][] blocks ={{0}};
         Board board = new Board(blocks);
-        assertEquals(1, board.hamming());
+        assertEquals(0, board.hamming());
     }
 }
