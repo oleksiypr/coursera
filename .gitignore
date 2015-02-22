@@ -15,11 +15,11 @@ out
 *.swp
 
 # Package Files #
-*.jar
+#*.jar
 
 
 # exept javascript test environmet
-!*/libs
+#!*/libs
 
 
 # IntelliJ project files
