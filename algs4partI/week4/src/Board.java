@@ -58,7 +58,8 @@ public class Board {
         hamming = 0;
         for (int i = 0; i < N; i++)
         for (int j = 0; j < N; j++) {
-            if (number(i, j) !=  blocks[i][j]) hamming++;
+            int n = number(i, j);
+            if (n != BLANK && n != blocks[i][j]) hamming++;
         }
         return hamming;
     }
@@ -74,6 +75,7 @@ public class Board {
         for (int i = 0; i < N; i++)
         for (int j = 0; j < N; j++) {
             int n = blocks[i][j];
+            if (n == BLANK) continue;
             int di = Math.abs(i - i(n));
             int dj = Math.abs(j - j(n));            
             manhattan += di + dj;
@@ -164,12 +166,12 @@ public class Board {
     
     private int i(int n) {
         if (n == 0) return N - 1;
-        return n/N;
+        return (n - 1)/N;
     }
     
     private int j(int n) {
-        if (n%N == 0) return N - 1;
-        return n%N - 1; 
+        if (n == 0) return N - 1;
+        return (n - 1)%N; 
     }
     
     private boolean hasNeighbour(int i, int j, int direction) {
@@ -223,6 +225,10 @@ public class Board {
         
         StdOut.println("original board:");
         StdOut.println(board);
+        StdOut.println();
+        
+        StdOut.println("twin board:");
+        StdOut.println(board.twin());
         StdOut.println();
      }
 }
