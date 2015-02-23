@@ -1,10 +1,35 @@
+import java.util.Comparator;
+
 public class Solver {
+    private static class HammingComparator implements Comparator<SearchNode> {
+        @Override
+        public int compare(SearchNode n1, SearchNode n2) {
+            int h1 = n1.moves + n1.board.hamming();
+            int h2 = n2.moves + n2.board.hamming();
+            return h1 - h2;
+        }        
+    }
+    
+    private static class SearchNode {
+        private final Board board;
+        private final int moves;
+        private final SearchNode previous;
+        public SearchNode(Board board, int moves, SearchNode previous) {
+            this.board = board;
+            this.moves = moves;
+            this.previous = previous;
+        }        
+    }
+    
+    private MinPQ<SearchNode> priorityQueue;
+    
     /**
      * Find a solution to the initial board (using the A* algorithm)
      * @param initial
      */
     public Solver(Board initial) {
-        //TODO        
+        priorityQueue = new MinPQ<Solver.SearchNode>(new HammingComparator());
+        priorityQueue.insert(new SearchNode(initial, 0, null));        
     }          
     
     /**
