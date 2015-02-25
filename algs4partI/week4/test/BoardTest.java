@@ -4,35 +4,12 @@ import org.junit.Test;
 
 public class BoardTest { 
     @Test
-    public void testZeroDimension() {
-        Board board = new Board(new int[0][0]); 
-        assertEquals(0, board.dimension());
-    }
-    
-    @Test
     public void testDimension() {
-        int N = 1;
-        Board board = new Board(new int[N][N]); 
+        int N = 10;
+        Board board = new Board(new int[N][N]);
         assertEquals(N, board.dimension());
-        
-        N = 10;
-        board = new Board(new int[N][N]); 
-        assertEquals(N, board.dimension());
-    }
-    
-    @Test
-    public void testZeroHamming() {
-        Board board = new Board(new int[0][0]); 
-        assertEquals(0, board.hamming());
-    }    
-  
-    @Test
-    public void testOneHamming() {
-        int[][] blocks ={{0}};
-        Board board = new Board(blocks);
-        assertEquals(0, board.hamming());
-    }    
-    
+    } 
+
     @Test
     public void testHammingAllInPosition() {
         int[][] blocks = {{ 1, 2, 3 }, 
@@ -163,27 +140,19 @@ public class BoardTest {
     
     @Test
     public void isGoalTrue() {
-        int[][] single = {{0}};
-        Board board = new Board(single);
-        assertTrue(board.isGoal()); 
-        
         int[][] blocks = {{ 1, 2, 3 }, 
                           { 4, 5, 6 }, 
                           { 7, 8, 0 }};  
-        board = new Board(blocks);
+        Board board = new Board(blocks);
         assertTrue(board.isGoal());        
     }
     
     @Test
     public void isGoalFalse() {
-        int[][] single = {{1}};
-        Board board = new Board(single);
-        assertFalse(board.isGoal()); 
-        
         int[][] blocks = {{ 2, 1, 3 }, 
                           { 4, 5, 6 }, 
                           { 7, 8, 0 }};  
-        board = new Board(blocks);
+        Board board = new Board(blocks);
         assertFalse(board.isGoal());        
     }
     
@@ -210,21 +179,7 @@ public class BoardTest {
             if (twin.twin().equals(board)) break;
         }
     } 
-    
-    @Test 
-    public void testTwinSingle() {
-        int[][] single = {{1}};
-        Board board = new Board(single);
-        assertEquals(board, board.twin());
-    }
-    
-    @Test
-    public void testNeighboursSingle() {
-        int[][] single = {{0}};
-        Board board = new Board(single);
-        assertFalse(board.neighbors().iterator().hasNext());
-    }
-    
+
     @Test
     public void testNeighboursTop() {
         int[][] blocks0 = {{ 2, 0, 3 }, 

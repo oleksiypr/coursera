@@ -1,3 +1,7 @@
+/**
+ * Board is an immutable data type that represents N*N game board.
+ * @author Oleksiy_Prosyanko
+ */
 public class Board {
     private final static int BLANK = 0; //blank block
     private final static int NA = -1;   //not available yet
@@ -9,11 +13,9 @@ public class Board {
     
     private final int[][] blocks;
     private final int N;
+    
     private final int iBlank;
     private final int jBlank;
-    
-    private int hamming = NA;
-    private int manhattan = NA;
     
     /**
      * Construct a board from an N-by-N array of blocks
@@ -53,9 +55,7 @@ public class Board {
      * @return number of blocks out of place
      */
     public int hamming() {
-        if (hamming != NA) return hamming;
-        
-        hamming = 0;
+        int hamming = 0;
         for (int i = 0; i < N; i++)
         for (int j = 0; j < N; j++) {
             int n = number(i, j);
@@ -69,9 +69,7 @@ public class Board {
      * @return sum of Manhattan distances between blocks and goal
      */
     public int manhattan() {
-        if (manhattan != NA) return manhattan;
-        
-        manhattan = 0;
+        int manhattan = 0;
         for (int i = 0; i < N; i++)
         for (int j = 0; j < N; j++) {
             int n = blocks[i][j];
@@ -99,7 +97,7 @@ public class Board {
      * A board that is obtained by exchanging two adjacent blocks in the same row.
      * @return new board that is obtained by exchanging two adjacent blocks in the same row
      */
-    public Board twin() {
+    public Board twin() {  
         if (N < 2) return new Board(blocks);
         
         int i = StdRandom.uniform(0, N);
@@ -127,8 +125,7 @@ public class Board {
         
         return neighbours;
     }  
-    
-    
+        
     @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
@@ -151,7 +148,7 @@ public class Board {
         s.append(N + "\n");
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                s.append(String.format("%2d ", blocks[i][j]));
+                s.append(String.format("%2d ", (int) blocks[i][j]));
             }
             s.append("\n");
         }
@@ -196,18 +193,26 @@ public class Board {
             default:    throw new IllegalArgumentException("Unknown direction: " + direction);
         }    
         
-        swap(i, j, i1, j1);
-        Board swapped = new Board(blocks);
-        swap(i1, j1, i, j);
-        return swapped;
+        int[][] copy = copy();
+        swap(copy, i, j, i1, j1);
+        return new Board(copy);
     }
-
-    private void swap(int i1, int j1, int i2, int j2) {
+    
+    private int[][] copy() {
+        int[][] copy = new int[N][N];
+        for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++) 
+            copy[i][j] = blocks[i][j]; 
+        
+        return copy;
+    }
+    
+    private void swap(int[][] blocks, int i1, int j1, int i2, int j2) {
         int tmp = blocks[i1][j1];
         blocks[i1][j1] = blocks[i2][j2];
         blocks[i2][j2] = tmp;        
     }
-
+    
     public static void main(String[] args) {
         int[][] blocks = {
                 {10, 0, 3}, 
