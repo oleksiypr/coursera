@@ -12,10 +12,10 @@
  */
 public class Solver {    
     private static class SearchNode implements Comparable<SearchNode> {
-        private final Board board;
-        private final int moves;
-        private final SearchNode previous;
-        public SearchNode(Board board, int moves, SearchNode previous) {
+        final Board board;
+        final int moves;
+        final SearchNode previous;
+        SearchNode(Board board, int moves, SearchNode previous) {
             this.board = board;
             this.moves = moves;
             this.previous = previous;
@@ -43,6 +43,7 @@ public class Solver {
     
     private final SearchNode initialNode;
     private SearchNode solution; 
+    private SearchNode solutionTwin; 
     
     /**
      * Find a solution to the initial board (using the A* algorithm)
@@ -51,8 +52,10 @@ public class Solver {
     public Solver(Board initial) {
         nodes = new MinPQ<Solver.SearchNode>();
         twins = new MinPQ<Solver.SearchNode>();
-        initialNode = new SearchNode(initial, 0, null);             
+        initialNode = new SearchNode(initial, 0, null);     
+        
         solution = null;
+        solutionTwin = null;
         
         nodes.insert(initialNode);
         twins.insert(new SearchNode(initial.twin(), 0, null));        
@@ -68,7 +71,9 @@ public class Solver {
             solution = initialNode;   
             return true;
         }
+        
         if (solution != null) return true;
+        if (solutionTwin != null) return false;
         
         while (true) {  
             SearchNode node = nodes.delMin();
@@ -80,6 +85,7 @@ public class Solver {
             }
             
             if (twin.board.isGoal()) {
+                solutionTwin = twin;
                 return false;                
             }
             
