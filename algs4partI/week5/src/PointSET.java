@@ -1,3 +1,5 @@
+import java.util.TreeSet;
+
 /**
  * The data type that represents a set of points in the unit square. 
  * Implemented by using a red-black BST.
@@ -5,11 +7,13 @@
  * @author Oleksiy Prosyanko
  */
 public class PointSET {
+	private TreeSet<Point2D> points;
+	
 	/**
 	 *  Construct an empty set of points.
 	 */
 	public PointSET() {
-		//TODO
+		points = new TreeSet<Point2D>();
 	}     
 	
 	/**
@@ -17,8 +21,7 @@ public class PointSET {
 	 * @return true iff set is empty
 	 */
 	public boolean isEmpty() {
-		//TODO
-		return true;
+		return points.isEmpty();
 	}   
 	
     /**
@@ -26,8 +29,7 @@ public class PointSET {
      * @return number of points in the set
      */
 	public int size() {
-		//TODO
-		return -1;
+		return points.size();
 	} 
 	
     /**
@@ -35,7 +37,7 @@ public class PointSET {
      * @param p point to add
      */
 	public void insert(Point2D p) {
-		//TODO
+		points.add(p);
 	}
 	
     /**
@@ -44,15 +46,14 @@ public class PointSET {
      * @return true iff the set contains point
      */
 	public boolean contains(Point2D p) {
-		//TODO
-		return false;
+		return points.contains(p);
 	} 
 	
     /**
      * Draw all points to standard draw.
      */
 	public void draw() {
-		//TODO
+		for (Point2D p: points) StdDraw.point(p.x(), p.y());
 	} 
 	
     /**
@@ -61,18 +62,30 @@ public class PointSET {
      * @return points
      */
 	public Iterable<Point2D> range(RectHV rect) {
-		//TODO
-		return null;
+		Stack<Point2D> ps = new Stack<Point2D>();
+		for (Point2D p: points) {
+			if (!rect.contains(p)) continue;
+			ps.push(p);
+		}
+		return ps;
 	} 
 	
     /**
-     * F nearest neighbor in the set to point p; null if the set is empty
-     * @param p
-     * @return
+     * A nearest neighbor in the set to point p; null if the set is empty.
+     * @param p point
+     * @return nearest neighbor
      */
-	public Point2D nearest(Point2D p) {
-		//TODO 
-		return null;
+	public Point2D nearest(Point2D q) {	
+		Point2D nearest = null;
+		double dSqrMin = Double.POSITIVE_INFINITY;
+		for (Point2D p: points) {
+			double dSqr = p.distanceSquaredTo(q);
+			if (dSqr < dSqrMin) {
+				dSqrMin = dSqr;
+				nearest = p;
+			}
+		}
+		return nearest;
 	} 
 
     // unit testing of the methods (optional)
