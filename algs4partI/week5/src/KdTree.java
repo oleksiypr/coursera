@@ -18,7 +18,7 @@ public class KdTree {
         abstract boolean nextDimention();
     }
     
-    private static class Xnode extends Node {
+    static class Xnode extends Node {
         public Xnode(Point2D point) { super(point); }
         @Override boolean nextDimention() { return HORISONTAL; }      
 
@@ -36,7 +36,7 @@ public class KdTree {
         }    
     }
     
-    private static class Ynode extends Node {
+    static class Ynode extends Node {
         public Ynode(Point2D point) { super(point); }
         @Override boolean nextDimention() { return VERTICAL; }      
 

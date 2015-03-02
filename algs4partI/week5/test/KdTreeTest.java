@@ -52,11 +52,17 @@ public class KdTreeTest {
         tree.insert(p4);
         tree.insert(p5);
         
+        Assert.assertEquals(5, tree.size());
         Assert.assertEquals(p1, tree.root().point);
         Assert.assertEquals(p2, tree.root().right.point);
         Assert.assertEquals(p3, tree.root().left.point);
         Assert.assertEquals(p4, tree.root().left.left.point);
         Assert.assertEquals(p5, tree.root().left.right.point);
-        Assert.assertEquals(5, tree.size());
+        
+        Assert.assertTrue(tree.root() instanceof KdTree.Xnode);
+        Assert.assertTrue(tree.root().right instanceof KdTree.Ynode);
+        Assert.assertTrue(tree.root().left instanceof KdTree.Ynode);
+        Assert.assertTrue(tree.root().left.left instanceof KdTree.Xnode);
+        Assert.assertTrue(tree.root().left.right instanceof KdTree.Xnode);
     }
 }
