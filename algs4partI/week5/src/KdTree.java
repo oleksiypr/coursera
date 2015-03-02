@@ -5,11 +5,62 @@
  * @author Oleksiy Prosyanko
  */
 public class KdTree {
+    private static final boolean HORISONTAL = true;
+    private static final boolean VERTICAL = false;
+    
+    static abstract class Node implements Comparable<Point2D> {
+        final Point2D point;
+        Node left = null;
+        Node right = null;
+        int count = 1;
+        
+        public Node(Point2D point) { this.point = point; }        
+        abstract boolean nextDimention();
+    }
+    
+    private static class Xnode extends Node {
+        public Xnode(Point2D point) { super(point); }
+        @Override boolean nextDimention() { return HORISONTAL; }      
+
+        @Override
+        public int compareTo(Point2D q) {
+            double dx = this.point.x() - q.x();
+            if (dx > 0.0) return +1;
+            if (dx < 0.0) return -1;
+            if (dx == 0.0) {
+                double dy = this.point.y() - q.y();
+                if (dy > 0.0) return +1;
+                if (dy < 0.0) return -1;
+            }
+            return 0;
+        }    
+    }
+    
+    private static class Ynode extends Node {
+        public Ynode(Point2D point) { super(point); }
+        @Override boolean nextDimention() { return VERTICAL; }      
+
+        @Override
+        public int compareTo(Point2D q) {
+            double dy = this.point.y() - q.y();
+            if (dy > 0.0) return +1;
+            if (dy < 0.0) return -1;
+            if (dy == 0.0) {
+                double dx = this.point.x() - q.x();
+                if (dx > 0.0) return +1;
+                if (dx < 0.0) return -1;
+            }
+            return 0;
+        }    
+    }
+    
+    private Node root;
+    
 	/**
 	 *  Construct an empty set of points.
 	 */
 	public KdTree() {
-		//TODO
+		root = null;
 	}     
 	
 	/**
@@ -17,8 +68,7 @@ public class KdTree {
 	 * @return true iff set is empty
 	 */
 	public boolean isEmpty() {
-		//TODO
-		return true;
+		return size() == 0;
 	}   
 	
     /**
@@ -26,8 +76,7 @@ public class KdTree {
      * @return number of points in the set
      */
 	public int size() {
-		//TODO
-		return -1;
+		return size(root);
 	} 
 	
     /**
@@ -35,7 +84,7 @@ public class KdTree {
      * @param p point to add
      */
 	public void insert(Point2D p) {
-		//TODO
+		root = insert(root, p, VERTICAL);
 	}
 	
     /**
@@ -74,7 +123,34 @@ public class KdTree {
 		//TODO 
 		return null;
 	} 
-
+	
+	/**
+	 * To be used for testing  purpose.
+	 * @return root of this tree
+	 */
+	Node root() {
+	    return this.root;
+	}
+	
+    public Node insert(Node node, Point2D p, boolean dimention) {
+        if (node == null) {
+            if (dimention == VERTICAL) return new Xnode(p);
+            if (dimention == HORISONTAL) return new Ynode(p);    
+        }
+        
+        int cmp = node.compareTo(p);
+        if (cmp < 0) node.right = insert(node.right, p, node.nextDimention());
+        if (cmp > 0) node.left = insert(node.left, p, node.nextDimention());
+        
+        node.count = 1 + size(node.left) + size(node.right);        
+        return node;
+    }
+	
+	private int size(Node x) {
+        if (x == null) return 0;
+        return x.count;
+    }
+    
     // unit testing of the methods (optional)
 	public static void main(String[] args) {} 
 }
