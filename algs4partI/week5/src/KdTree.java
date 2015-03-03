@@ -5,22 +5,29 @@
  * @author Oleksiy Prosyanko
  */
 public class KdTree {
-    private static final boolean HORISONTAL = true;
-    private static final boolean VERTICAL = false;
+    private static final boolean X = true;
+    private static final boolean Y = false;
     
     static abstract class Node implements Comparable<Point2D> {
         final Point2D point;
+        final  RectHV rectangle;
         Node left = null;
         Node right = null;
         int count = 1;
         
-        public Node(Point2D point) { this.point = point; }        
-        abstract boolean nextDimention();
+        public Node(Point2D point, RectHV rectangle) { 
+            this.point = point;
+            this.rectangle = rectangle;
+        }        
+        abstract boolean dimention();
+        abstract RectHV rectRight();
+        abstract RectHV rectLeft();
+        boolean nextDimention() { return !dimention(); }        
     }
     
-    private static class Xnode extends Node {
-        public Xnode(Point2D point) { super(point); }
-        @Override boolean nextDimention() { return HORISONTAL; }      
+    private static class Xnode extends Node {       
+        public Xnode(Point2D point, RectHV rectangle) { super(point, rectangle); }
+        @Override boolean dimention() { return X; }      
 
         @Override
         public int compareTo(Point2D q) {
@@ -33,12 +40,29 @@ public class KdTree {
                 if (dy < 0.0) return -1;
             }
             return 0;
+        }
+        @Override
+        RectHV rectRight() {
+            double xmin = point.x();
+            double ymin = rectangle.ymin();
+            double xmax = rectangle.xmax();
+            double ymax = rectangle.ymax();
+            return new RectHV(xmin, ymin, xmax, ymax);
+        }
+        
+        @Override
+        RectHV rectLeft() {
+            double xmin = rectangle.xmin();
+            double ymin = rectangle.ymin();
+            double xmax = point.x();
+            double ymax = rectangle.ymax();
+            return new RectHV(xmin, ymin, xmax, ymax);
         }    
     }
     
-    private static class Ynode extends Node {
-        public Ynode(Point2D point) { super(point); }
-        @Override boolean nextDimention() { return VERTICAL; }      
+    private static class Ynode extends Node {        
+        public Ynode(Point2D point, RectHV rectangle) { super(point, rectangle); }
+        @Override boolean dimention() { return Y; }      
 
         @Override
         public int compareTo(Point2D q) {
@@ -51,6 +75,22 @@ public class KdTree {
                 if (dx < 0.0) return -1;
             }
             return 0;
+        }
+        @Override
+        RectHV rectRight() {
+            double xmin = rectangle.xmin();
+            double ymin = point.y();
+            double xmax = rectangle.xmax();
+            double ymax = rectangle.ymax();
+            return new RectHV(xmin, ymin, xmax, ymax);
+        }
+        @Override
+        RectHV rectLeft() {
+            double xmin = rectangle.xmin();
+            double ymin = rectangle.ymin();
+            double xmax = rectangle.xmax();
+            double ymax = point.y();
+            return new RectHV(xmin, ymin, xmax, ymax);
         }    
     }
     
@@ -84,7 +124,7 @@ public class KdTree {
      * @param p point to add
      */
 	public void insert(Point2D p) {
-		root = insert(root, p, VERTICAL);
+		root = insert(root, p, new RectHV(0.0, 0.0, 1.0, 1.0), X);
 	}
 	
     /**
@@ -101,7 +141,31 @@ public class KdTree {
      * Draw all points to standard draw.
      */
 	public void draw() {
-		//TODO
+        for (Node node: nodes()) {
+	        double x = node.point.x();
+	        double y = node.point.y();
+	        
+	        StdDraw.setPenColor(StdDraw.BLACK);
+	        StdDraw.setPenRadius(.01);
+	        StdDraw.point(x, y);
+
+            StdDraw.setPenRadius();
+            double x0 = 0.0, y0 = 0.0;
+            double x1 = 0.0, y1 = 0.0;
+	        if (node.dimention() == X) {
+	            StdDraw.setPenColor(StdDraw.RED);
+	            x0 = x; y0 = node.rectangle.ymin();
+	            x1 = x; y1 = node.rectangle.ymax();
+	        }    
+	        
+            if (node.dimention() == Y) {
+                StdDraw.setPenColor(StdDraw.BLUE);
+                x0 = node.rectangle.xmin(); y0 = y;
+                x1 = node.rectangle.xmax(); y1 = y;
+            } 
+            
+            StdDraw.line(x0, y0, x1, y1);
+	    }
 	} 
 	
     /**
@@ -132,25 +196,38 @@ public class KdTree {
 	    return this.root;
 	}
 	
-    public Node insert(Node node, Point2D p, boolean dimention) {
+    public Node insert(Node node, Point2D p, RectHV rectangle, boolean dimention) {
         if (node == null) {
-            if (dimention == VERTICAL) return new Xnode(p);
-            if (dimention == HORISONTAL) return new Ynode(p);    
+            if (dimention == X) return new Xnode(p, rectangle);
+            if (dimention == Y) return new Ynode(p, rectangle);    
         }
         
         int cmp = node.compareTo(p);
-        if (cmp < 0) node.right = insert(node.right, p, node.nextDimention());
-        if (cmp > 0) node.left = insert(node.left, p, node.nextDimention());
+        if (cmp < 0) node.right = insert(node.right, p, node.rectRight(), node.nextDimention());
+        if (cmp > 0) node.left = insert(node.left, p, node.rectLeft(), node.nextDimention());
         
         node.count = 1 + size(node.left) + size(node.right);        
         return node;
     }
+    
+    private Iterable<Node> nodes() {
+        Queue<Node> queue = new Queue<Node>();
+        inorder(root, queue);
+        return queue;        
+    }
 	
-	private int size(Node x) {
-        if (x == null) return 0;
-        return x.count;
+	private int size(Node node) {
+        if (node == null) return 0;
+        return node.count;
     }
     
+	private void inorder(Node node, Queue<Node> queue) {
+	    if (node == null) return;
+	    inorder(node.left, queue);
+	    queue.enqueue(node);
+	    inorder(node.right, queue);
+	}
+	
     // unit testing of the methods (optional)
 	public static void main(String[] args) {} 
 }
