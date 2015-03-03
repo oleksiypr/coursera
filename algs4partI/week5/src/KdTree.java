@@ -25,7 +25,7 @@ public class KdTree {
         boolean nextDimention() { return !dimention(); }        
     }
     
-    private static class Xnode extends Node {       
+    static class Xnode extends Node {       
         public Xnode(Point2D point, RectHV rectangle) { super(point, rectangle); }
         @Override boolean dimention() { return X; }      
 
@@ -60,7 +60,7 @@ public class KdTree {
         }    
     }
     
-    private static class Ynode extends Node {        
+    static class Ynode extends Node {        
         public Ynode(Point2D point, RectHV rectangle) { super(point, rectangle); }
         @Override boolean dimention() { return Y; }      
 
@@ -150,8 +150,8 @@ public class KdTree {
 	        StdDraw.point(x, y);
 
             StdDraw.setPenRadius();
-            double x0 = 0.0, y0 = 0.0;
-            double x1 = 0.0, y1 = 0.0;
+            double x0 = 0.0, x1 = 0.0;
+            double y0 = 0.0, y1 = 0.0;
 	        if (node.dimention() == X) {
 	            StdDraw.setPenColor(StdDraw.RED);
 	            x0 = x; y0 = node.rectangle.ymin();
