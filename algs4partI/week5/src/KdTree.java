@@ -76,6 +76,7 @@ public class KdTree {
             }
             return 0;
         }
+        
         @Override
         RectHV rectRight() {
             double xmin = rectangle.xmin();
@@ -84,6 +85,7 @@ public class KdTree {
             double ymax = rectangle.ymax();
             return new RectHV(xmin, ymin, xmax, ymax);
         }
+        
         @Override
         RectHV rectLeft() {
             double xmin = rectangle.xmin();
@@ -133,7 +135,13 @@ public class KdTree {
      * @return true iff the set contains point
      */
 	public boolean contains(Point2D p) {
-		//TODO
+		Node node = root;
+		while (node != null) {
+		    int cmp = node.compareTo(p);
+		    if (cmp < 0) node = node.right;
+		    else if (cmp > 0) node = node.left;
+		    else if (cmp == 0) return true;
+		}
 		return false;
 	} 
 	
@@ -196,7 +204,7 @@ public class KdTree {
 	    return this.root;
 	}
 	
-    public Node insert(Node node, Point2D p, RectHV rectangle, boolean dimention) {
+    private Node insert(Node node, Point2D p, RectHV rectangle, boolean dimention) {
         if (node == null) {
             if (dimention == X) return new Xnode(p, rectangle);
             if (dimention == Y) return new Ynode(p, rectangle);    
@@ -227,7 +235,4 @@ public class KdTree {
 	    queue.enqueue(node);
 	    inorder(node.right, queue);
 	}
-	
-    // unit testing of the methods (optional)
-	public static void main(String[] args) {} 
 }

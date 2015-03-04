@@ -65,4 +65,56 @@ public class KdTreeTest {
         Assert.assertTrue(tree.root().left.left instanceof KdTree.Xnode);
         Assert.assertTrue(tree.root().left.right instanceof KdTree.Xnode);
     }
+    
+    @Test
+    public void emptyTreeContainsNothing() {
+        KdTree tree = new KdTree();
+        Assert.assertFalse(tree.contains(new Point2D(0.1, 0.5)));
+    }
+    
+    @Test
+    public void containsTest() {
+        KdTree tree = new KdTree();
+        Point2D p1 = new Point2D(0.5, 0.6);
+        Point2D p2 = new Point2D(0.7, 0.3);
+        Point2D p3 = new Point2D(0.2, 0.4);
+        Point2D p4 = new Point2D(0.1, 0.2);
+        Point2D p5 = new Point2D(0.3, 0.7);
+        
+        tree.insert(p1);
+        tree.insert(p2);
+        tree.insert(p3);
+        tree.insert(p4);
+                        
+        Assert.assertTrue(tree.contains(p1));
+        Assert.assertTrue(tree.contains(p2));
+        Assert.assertTrue(tree.contains(p3));
+        Assert.assertTrue(tree.contains(p4));
+        Assert.assertTrue(tree.contains(p5));
+        
+        Assert.assertFalse(tree.contains(new Point2D(0.0, 0.0)));
+        Assert.assertFalse(tree.contains(new Point2D(0.6, 0.7)));
+        Assert.assertFalse(tree.contains(new Point2D(1.5, 1.6)));
+        Assert.assertFalse(tree.contains(new Point2D(0.4, 0.6)));
+        Assert.assertFalse(tree.contains(new Point2D(-0.5, 0.6)));
+    }
+    
+    @Test
+    public void containsAfterInsertTest() {
+        KdTree tree = new KdTree();
+        Point2D p1 = new Point2D(0.5, 0.6);
+        Point2D p2 = new Point2D(0.7, 0.3);
+        Point2D p3 = new Point2D(0.2, 0.4);
+        Point2D p4 = new Point2D(0.1, 0.2);
+        Point2D p5 = new Point2D(0.3, 0.7);
+        
+        tree.insert(p1);
+        tree.insert(p2);
+        tree.insert(p3);
+        tree.insert(p4);
+        
+        Assert.assertFalse(tree.contains(p5));
+        tree.insert(p5);
+        Assert.assertTrue(tree.contains(p5));        
+    }
 }
