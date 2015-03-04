@@ -115,6 +115,59 @@ public class KdTreeTest {
         
         Assert.assertFalse(tree.contains(p5));
         tree.insert(p5);
-        Assert.assertTrue(tree.contains(p5));        
+        Assert.assertTrue(tree.contains(p5));   
+    }
+    
+    @Test
+    public void emptyTreeRangeNothing() {
+        KdTree tree = new KdTree();
+        RectHV query = new RectHV(0.0, 0.0, 1.0, 1.0);
+        Assert.assertFalse(tree.range(query).iterator().hasNext());
+    }
+    
+    @Test
+    public void rooRectangleContainsEverything() {
+        KdTree tree = new KdTree();
+        Point2D p1 = new Point2D(0.5, 0.6);
+        Point2D p2 = new Point2D(0.7, 0.3);
+        Point2D p3 = new Point2D(0.2, 0.4);
+        Point2D p4 = new Point2D(0.1, 0.2);
+        Point2D p5 = new Point2D(0.3, 0.7);
+        
+        tree.insert(p1);
+        tree.insert(p2);
+        tree.insert(p3);
+        tree.insert(p4);
+        tree.insert(p5);
+        
+        RectHV query = tree.root().rectangle;
+        Stack<Point2D> result = (Stack<Point2D>) tree.range(query);
+        Assert.assertEquals(tree.size(), result.size());
+    }
+    
+    @Test
+    public void rangeTest() {
+        KdTree tree = new KdTree();
+        Point2D p1 = new Point2D(0.5, 0.6);
+        Point2D p2 = new Point2D(0.7, 0.3);
+        Point2D p3 = new Point2D(0.2, 0.4);
+        Point2D p4 = new Point2D(0.1, 0.2);
+        Point2D p5 = new Point2D(0.3, 0.7);
+        
+        tree.insert(p1);
+        tree.insert(p2);
+        tree.insert(p3);
+        tree.insert(p4);
+        tree.insert(p5);
+        
+        RectHV query = new RectHV(0.4, 0.3, 0.8, 0.7);
+        Stack<Point2D> result = (Stack<Point2D>) tree.range(query);
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals(p2, result.pop());
+        Assert.assertEquals(p1, result.pop());
+        
+        RectHV emptyResultquery = new RectHV(0.6, 0.4, 0.9, 0.8);
+        Stack<Point2D> emptyResult = (Stack<Point2D>) tree.range(emptyResultquery);
+        Assert.assertTrue(emptyResult.isEmpty());
     }
 }

@@ -182,8 +182,9 @@ public class KdTree {
      * @return points
      */
 	public Iterable<Point2D> range(RectHV rect) {
-		//TODO
-		return null;
+		Stack<Point2D> points = new Stack<Point2D>();		
+		range(root, rect, points);
+		return points;
 	} 
 	
     /**
@@ -217,11 +218,29 @@ public class KdTree {
         node.count = 1 + size(node.left) + size(node.right);        
         return node;
     }
-    
+        
     private Iterable<Node> nodes() {
         Queue<Node> queue = new Queue<Node>();
         inorder(root, queue);
         return queue;        
+    }
+    
+    private void range(Node node, RectHV query, Stack<Point2D> result) {
+        if (node == null) return;
+        if (query.contains(node.point)) result.push(node.point);
+        if (node.left  == null || !query.intersects(node.left.rectangle)) {
+            range(node.right, query, result);
+            return;
+        }
+        
+        if (node.right == null || !query.intersects(node.right.rectangle)) {
+            range(node.left, query, result);
+            return;
+        }
+        
+        range(node.right, query, result);
+        range(node.left, query, result);
+        
     }
 	
 	private int size(Node node) {
