@@ -7,7 +7,7 @@ import java.util.TreeSet;
  * @author Oleksiy Prosyanko
  */
 public class PointSET {
-	private TreeSet<Point2D> points;
+    private TreeSet<Point2D> points;
 	
 	/**
 	 *  Construct an empty set of points.
@@ -87,7 +87,4 @@ public class PointSET {
 		}
 		return nearest;
 	} 
-
-    // unit testing of the methods (optional)
-	public static void main(String[] args) {} 
 }

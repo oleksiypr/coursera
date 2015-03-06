@@ -27,9 +27,7 @@ public class NearestNeighborVisualizer {
             double y = in.readDouble();
             Point2D p = new Point2D(x, y);
             
-            //TODO uncomment when ready
-            //kdtree.insert(p);
-            
+            kdtree.insert(p);
             brute.insert(p);
         }
 
@@ -54,9 +52,8 @@ public class NearestNeighborVisualizer {
 
             // draw in blue the nearest neighbor (using kd-tree algorithm)
             StdDraw.setPenColor(StdDraw.BLUE);
-            
-            //TODO uncomment when ready
-            //kdtree.nearest(query).draw();
+
+            kdtree.nearest(query).draw();
             
             StdDraw.show(0);
             StdDraw.show(40);

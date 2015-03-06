@@ -32,8 +32,6 @@ public class KdTreeTest {
         Point2D p0 = new Point2D(0.0, 0.0);
         tree.insert(p0);
         
-        Assert.assertNotNull(tree.root());
-        Assert.assertEquals(p0, tree.root().point);
         Assert.assertEquals(1, tree.size());
     }
     
@@ -53,17 +51,6 @@ public class KdTreeTest {
         tree.insert(p5);
         
         Assert.assertEquals(5, tree.size());
-        Assert.assertEquals(p1, tree.root().point);
-        Assert.assertEquals(p2, tree.root().right.point);
-        Assert.assertEquals(p3, tree.root().left.point);
-        Assert.assertEquals(p4, tree.root().left.left.point);
-        Assert.assertEquals(p5, tree.root().left.right.point);
-        
-        Assert.assertTrue(tree.root() instanceof KdTree.Xnode);
-        Assert.assertTrue(tree.root().right instanceof KdTree.Ynode);
-        Assert.assertTrue(tree.root().left instanceof KdTree.Ynode);
-        Assert.assertTrue(tree.root().left.left instanceof KdTree.Xnode);
-        Assert.assertTrue(tree.root().left.right instanceof KdTree.Xnode);
     }
     
     @Test
@@ -85,13 +72,15 @@ public class KdTreeTest {
         tree.insert(p2);
         tree.insert(p3);
         tree.insert(p4);
-                        
+        tree.insert(p5);
+        
         Assert.assertTrue(tree.contains(p1));
         Assert.assertTrue(tree.contains(p2));
         Assert.assertTrue(tree.contains(p3));
         Assert.assertTrue(tree.contains(p4));
         Assert.assertTrue(tree.contains(p5));
-        
+        Assert.assertTrue(tree.contains(p5));
+                
         Assert.assertFalse(tree.contains(new Point2D(0.0, 0.0)));
         Assert.assertFalse(tree.contains(new Point2D(0.6, 0.7)));
         Assert.assertFalse(tree.contains(new Point2D(1.5, 1.6)));
@@ -140,8 +129,7 @@ public class KdTreeTest {
         tree.insert(p4);
         tree.insert(p5);
         
-        RectHV query = tree.root().rectangle;
-        Stack<Point2D> result = (Stack<Point2D>) tree.range(query);
+        Stack<Point2D> result = (Stack<Point2D>) tree.range(new RectHV(0.0, 0.0, 1.0, 1.0));
         Assert.assertEquals(tree.size(), result.size());
     }
     
@@ -169,5 +157,69 @@ public class KdTreeTest {
         RectHV emptyResultquery = new RectHV(0.6, 0.4, 0.9, 0.8);
         Stack<Point2D> emptyResult = (Stack<Point2D>) tree.range(emptyResultquery);
         Assert.assertTrue(emptyResult.isEmpty());
+    }
+    
+    @Test
+    public void nearestNullTest() {
+        KdTree tree = new KdTree();
+        Assert.assertNull(tree.nearest(new Point2D(0.0, 0.0)));
+    } 
+    
+    @Test
+    public void nearestSamePointTest() {
+        KdTree tree = new KdTree();
+        tree.insert(new Point2D(0.0, 0.0));
+        tree.insert(new Point2D(0.1, 0.2));
+        
+        Point2D neerest = tree.nearest(new Point2D(0.0, 0.0));
+        Assert.assertNotNull(neerest);
+        Assert.assertEquals(new Point2D(0.0, 0.0), neerest);
+    } 
+    
+    @Test
+    public void nearestSinglePointTest() {
+        KdTree tree = new KdTree();
+        Point2D point = new Point2D(0.1, 0.2);
+        tree.insert(point);
+        
+        Point2D neerest = tree.nearest(new Point2D(0.8, 0.9));
+        Assert.assertNotNull(neerest);
+        Assert.assertEquals(point, neerest);
+    } 
+    
+    @Test
+    public void nearestTest() {
+        KdTree tree = new KdTree();
+        tree.insert(new Point2D(0.0, 0.0));
+        tree.insert(new Point2D(0.1, 0.2));
+        tree.insert(new Point2D(0.5, 0.6));
+        tree.insert(new Point2D(0.3, 0.1));
+        tree.insert(new Point2D(0.3, 0.5));
+        
+        Point2D query = new Point2D(0.6, 0.4);
+        Point2D neerest = tree.nearest(query);
+        Assert.assertNotNull(neerest);
+        Assert.assertEquals(new Point2D(0.5, 0.6), neerest);
+    }
+    
+    @Test
+    public void nearestTest2() {
+        KdTree tree = new KdTree();
+        Point2D p1 = new Point2D(0.5, 0.6);
+        Point2D p2 = new Point2D(0.7, 0.3);
+        Point2D p3 = new Point2D(0.2, 0.4);
+        Point2D p4 = new Point2D(0.1, 0.2);
+        Point2D p5 = new Point2D(0.3, 0.7);
+        
+        tree.insert(p1);
+        tree.insert(p2);
+        tree.insert(p3);
+        tree.insert(p4);
+        tree.insert(p5);
+        
+        Point2D query = new Point2D(0.3, 0.1);
+        Point2D neerest = tree.nearest(query);
+        Assert.assertNotNull(neerest);
+        Assert.assertEquals(p4, neerest);
     }
 }
