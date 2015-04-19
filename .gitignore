@@ -1,5 +1,6 @@
 bin
 build
+target
 .metadata
 .mock
 .classpath
