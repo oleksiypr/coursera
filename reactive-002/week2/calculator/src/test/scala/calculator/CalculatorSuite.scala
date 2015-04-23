@@ -33,7 +33,6 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(result() == MaxTweetLength - tweetLength("foo blabla \uD83D\uDCA9 bar"))
   }
 
-
   test("colorForRemainingCharsCount with a constant signal") {
     val resultGreen1 = TweetLength.colorForRemainingCharsCount(Var(52))
     assert(resultGreen1() == "green")
@@ -50,5 +49,4 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     val resultRed2 = TweetLength.colorForRemainingCharsCount(Var(-5))
     assert(resultRed2() == "red")
   }
-
 }
