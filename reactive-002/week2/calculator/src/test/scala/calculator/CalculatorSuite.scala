@@ -138,6 +138,81 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     def reset {a() = a0; b() = b0; c() = c0; d() = d0}
   }
   
+  /******************
+   ** Calculator   **
+   ******************/
+  
+  test("Calculator.eval. Literal") {
+    import Calculator.eval
+    val literal = 100.500
+    assert(eval(Literal(literal), Map()) == literal)
+  } 
+  
+  test("Calculator.eval. Arysmetic") {
+    import Calculator.eval
+    assert(eval(Literal(3.1415), Map()) == 3.1415)
+    assert(eval(Plus(Literal(1.0), Literal(2.0)), Map()) == 3.0)
+    assert(eval(Minus(Literal(3.0), Literal(1.0)), Map()) == 2.0)
+    assert(eval(Times(Literal(5.0), Literal(2.0)), Map()) == 10.0)
+    assert(eval(Divide(Literal(10.0), Literal(2.0)), Map()) == 5.0)    
+    assert(eval(
+      Divide(
+        Minus(
+          Plus(
+            Times(Literal(2.0), Literal(3.0)),
+            Literal(1.0)
+          ),
+          Literal(3.0)
+        ),
+        Literal(2.0)
+       ), Map()) == 2.0)
+    }
+
+  test("Calculator.eval. Rreferences. Simple.") {
+    import Calculator.eval
+    val references1: Map[String, Signal[Expr]] = Map("a" -> Signal(Literal(0.0)), "b" -> Signal(Literal(1.0)))
+    assert(Literal(eval(Ref("b"), references1)) == references1("b")())
+    assert(eval(Ref("c"), references1).isNaN())
+    
+    val references2: Map[String, Signal[Expr]] = references1 + ("c" -> Signal(Ref("b")))
+    assert(Literal(eval(Ref("c"), references2)) == references2("b")())
+  }
+  
+  test("Calculator.eval. Cyclic Rreferences.") { 
+    import Calculator.eval
+    val circular1: Map[String, Signal[Expr]] = Map("a" -> Signal(Ref("b")), "b" -> Signal(Ref("a")))
+    intercept[AssertionError] {
+      eval(Ref("a"), circular1)
+    }
+
+    val circular2: Map[String, Signal[Expr]] = Map(
+        "a" -> Signal(Ref("b")), 
+        "b" -> Signal(Ref("c")), 
+        "c" -> Signal(Ref("d")), 
+        "d" -> Signal(Ref("b")))
+    intercept[AssertionError] { eval(Ref("a"), circular2) } 
+  }
+  
+  test("Calculator.eval. Rreferences. Complex: a = 2b + 1") {
+    import Calculator.eval
+    val references: Map[String, Signal[Expr]] = Map(
+        "a" -> Signal(Plus(Times(Literal(2.0), Ref("b")), Literal(1.0))),  
+        "b" -> Signal(Literal(3.0)))
+        
+     assert(eval(Ref("a"), references) == 7.0)
+  }
+
+  test("Calculator.eval. Cyclic. Complex: a = 2b + a") {
+    import Calculator.eval
+    val references: Map[String, Signal[Expr]] = Map(
+      "a" -> Signal(Plus(Times(Literal(2.0), Ref("b")), Literal(1.0))),
+      //"a" -> Signal(Times(Literal(2.0), Ref("b"))),  
+      "b" -> Signal(Ref("a")))    
+      
+      assert(eval(Ref("a"), references).isNaN())
+  } 
+  
+    
   private def delta(a: Double, b: Double, c: Double) =  b*b - 4*a*c
   private def solution(a: Double, b: Double, c: Double, d: Double): Set[Double] = {
       import math.sqrt
