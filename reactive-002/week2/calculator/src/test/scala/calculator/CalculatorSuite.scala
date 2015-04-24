@@ -61,7 +61,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     val c = 0.54863
 
     assert(computeDelta(Var(1.45126), Var(b), Var(0.0))() == b*b)
-    assert(b*b - 4*a*c == computeDelta(Var(a), Var(b), Var(c))())    
+    assert(delta(a, b, c) == computeDelta(Var(a), Var(b), Var(c))())    
   }
   
   test("Polynomial.computeSolutions. Empty solution") {
@@ -69,8 +69,9 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     val a = 1.0
     val b = 1.0
     val c = 1.0
-    val delta = -1.0 
-    assert(computeSolutions(Var(a), Var(b), Var(c), Var(delta))() === Set.empty)
+    val d = delta(a, b, c)
+    assert(d < 0.0)
+    assert(computeSolutions(Var(a), Var(b), Var(c), Var(d))() === Set.empty)
   }
 
   test("Polynomial.computeSolutions. Single solution") {
@@ -86,20 +87,62 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
   }
   
   test("Polynomial.computeSolutions.") {
-    import Polynomial._
+    import Polynomial.computeSolutions
     import scala.math.sqrt
     
     val a =  2.541166
     val b =  6.159876
     val c =  3.3694459
-    val delta = b*b - 4*a*c
+    val d = delta(a, b, c)    
+    val expected = solution(a, b, c, d)
+    val actual = computeSolutions(Var(a), Var(b), Var(c), Var(d))
+    assert(actual() === expected)
+  }
+
+  test("Polynomial.computeDelta. Values updated") {
+    import Polynomial.computeDelta
+    val a0 = 3.5125;  val a1 =  1.25562
+    val b0 = 3.1341;  val b1 =  6.16356
+    val c0 = 0.5486;  val c1 = -0.6654
+    val expected0 = delta(a0, b0, c0)
+
+    val a = Var(a0)
+    val b = Var(b0)
+    val c = Var(c0)
+    val result = computeDelta(a, b, c)
+    reset; assert(result() == expected0); a() = a1; assert(result() == delta(a1, b0, c0))
+    reset; assert(result() == expected0); b() = b1; assert(result() == delta(a0, b1, c0))
+    reset; assert(result() == expected0); c() = c1; assert(result() == delta(a0, b0, c1))
     
-    val x1 = (-b - sqrt(delta))/(2*a)
-    val x2 = (-b + sqrt(delta))/(2*a)
-    val expected = Set(x1, x2)
+    def reset {a() = a0; b() = b0; c() = c0}
+  }
+  
+  test("Polynomial.computeSolutions. Values updated") {
+    import Polynomial.computeSolutions
+    val a0 =  8.2563;  val a1 = 5.65891
+    val b0 =  4.0256;  val b1 = 9.59684
+    val c0 = -5.5561;  val c1 = 2.65892
+    val d0 = delta(a0, b0, c0); val d1 = delta(a1, b1, c1)
+    val expected0 = solution(a0, b0, c0, d0)
+
+    val a = Var(a0)
+    val b = Var(b0)
+    val c = Var(c0)
+    val d = Var(d0)
+    val result = computeSolutions(a, b, c, d)
+    reset; assert(result() == expected0); a() = a1; assert(result() == solution(a1, b0, c0, d0))
+    reset; assert(result() == expected0); b() = b1; assert(result() == solution(a0, b1, c0, d0))
+    reset; assert(result() == expected0); c() = c1; assert(result() == solution(a0, b0, c1, d0))
+    reset; assert(result() == expected0); d() = d1; assert(result() == solution(a0, b0, c0, d1))
     
-    assert(computeDelta(Var(a), Var(b), Var(c))() >  Var(0.0)())
-    val solution = computeSolutions(Var(a), Var(b), Var(c), Var(delta))
-    assert(solution() === expected)
+    def reset {a() = a0; b() = b0; c() = c0; d() = d0}
+  }
+  
+  private def delta(a: Double, b: Double, c: Double) =  b*b - 4*a*c
+  private def solution(a: Double, b: Double, c: Double, d: Double): Set[Double] = {
+      import math.sqrt
+      val x1 = (-b - sqrt(d)) / (2.0 * a)
+      val x2 = (-b + sqrt(d)) / (2.0 * a)
+      Set(x1, x2)
   }
 }
