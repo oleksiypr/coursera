@@ -49,4 +49,57 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     val resultRed2 = TweetLength.colorForRemainingCharsCount(Var(-5))
     assert(resultRed2() == "red")
   }
+  
+  /******************
+   ** Polynomial **
+   ******************/
+
+  test("Polynomial.computeDelta") {
+    import Polynomial.computeDelta
+    val a = 3.5123645
+    val b = 3.1341
+    val c = 0.54863
+
+    assert(computeDelta(Var(1.45126), Var(b), Var(0.0))() == b*b)
+    assert(b*b - 4*a*c == computeDelta(Var(a), Var(b), Var(c))())    
+  }
+  
+  test("Polynomial.computeSolutions. Empty solution") {
+    import Polynomial.computeSolutions
+    val a = 1.0
+    val b = 1.0
+    val c = 1.0
+    val delta = -1.0 
+    assert(computeSolutions(Var(a), Var(b), Var(c), Var(delta))() === Set.empty)
+  }
+
+  test("Polynomial.computeSolutions. Single solution") {
+    import Polynomial._
+    val a =  1.0
+    val b = -2.0
+    val c =  1.0
+    val experted = -b/(2*a)
+    
+    assert(computeDelta(Var(a), Var(b), Var(c))() ==  Var(0.0)())
+    val solution = computeSolutions(Var(a), Var(b), Var(c), Var(0.0))
+    assert(solution() === Set(experted))
+  }
+  
+  test("Polynomial.computeSolutions.") {
+    import Polynomial._
+    import scala.math.sqrt
+    
+    val a =  2.541166
+    val b =  6.159876
+    val c =  3.3694459
+    val delta = b*b - 4*a*c
+    
+    val x1 = (-b - sqrt(delta))/(2*a)
+    val x2 = (-b + sqrt(delta))/(2*a)
+    val expected = Set(x1, x2)
+    
+    assert(computeDelta(Var(a), Var(b), Var(c))() >  Var(0.0)())
+    val solution = computeSolutions(Var(a), Var(b), Var(c), Var(delta))
+    assert(solution() === expected)
+  }
 }
