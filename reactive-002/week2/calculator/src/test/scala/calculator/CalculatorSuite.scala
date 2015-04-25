@@ -54,7 +54,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
    ** Polynomial **
    ******************/
 
-  test("Polynomial.computeDelta") {
+  test("Polynomial#computeDelta") {
     import Polynomial.computeDelta
     val a = 3.5123645
     val b = 3.1341
@@ -64,7 +64,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(delta(a, b, c) == computeDelta(Var(a), Var(b), Var(c))())    
   }
   
-  test("Polynomial.computeSolutions. Empty solution") {
+  test("Polynomial#computeSolutions. Empty solution") {
     import Polynomial.computeSolutions
     val a = 1.0
     val b = 1.0
@@ -74,7 +74,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(computeSolutions(Var(a), Var(b), Var(c), Var(d))() === Set.empty)
   }
 
-  test("Polynomial.computeSolutions. Single solution") {
+  test("Polynomial#computeSolutions. Single solution") {
     import Polynomial._
     val a =  1.0
     val b = -2.0
@@ -86,7 +86,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(solution() === Set(experted))
   }
   
-  test("Polynomial.computeSolutions.") {
+  test("Polynomial#computeSolutions.") {
     import Polynomial.computeSolutions
     import scala.math.sqrt
     
@@ -99,7 +99,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(actual() === expected)
   }
 
-  test("Polynomial.computeDelta. Values updated") {
+  test("Polynomial#computeDelta. Values updated") {
     import Polynomial.computeDelta
     val a0 = 3.5125;  val a1 =  1.25562
     val b0 = 3.1341;  val b1 =  6.16356
@@ -117,7 +117,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     def reset {a() = a0; b() = b0; c() = c0}
   }
   
-  test("Polynomial.computeSolutions. Values updated") {
+  test("Polynomial#computeSolutions. Values updated") {
     import Polynomial.computeSolutions
     val a0 =  8.2563;  val a1 = 5.65891
     val b0 =  4.0256;  val b1 = 9.59684
@@ -142,13 +142,13 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
    ** Calculator   **
    ******************/
   
-  test("Calculator.eval. Literal") {
+  test("Calculator#eval. Literal") {
     import Calculator.eval
     val literal = 100.500
     assert(eval(Literal(literal), Map()) == literal)
   } 
   
-  test("Calculator.eval. Arysmetic") {
+  test("Calculator#eval. Arysmetic") {
     import Calculator.eval
     assert(eval(Literal(3.1415), Map()) == 3.1415)
     assert(eval(Plus(Literal(1.0), Literal(2.0)), Map()) == 3.0)
@@ -168,13 +168,13 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
        ), Map()) == 2.0)
     }
 
-  test("Calculator.eval. Cyclic simple:  a = b, b = a") { 
+  test("Calculator#eval. Cyclic simple:  a = b, b = a") { 
     import Calculator.eval
     val circular1: Map[String, Signal[Expr]] = Map("a" -> Signal(Ref("b")), "b" -> Signal(Ref("a")))
     assert(eval(Ref("a"), circular1).isNaN())
   }
   
-  test("Calculator.eval. Cyclic complex 1:  a = b, b = c, c = d, d = b") {  
+  test("Calculator#eval. Cyclic complex 1:  a = b, b = c, c = d, d = b") {  
     import Calculator.eval
     val circular2: Map[String, Signal[Expr]] = Map(
         "a" -> Signal(Ref("b")), 
@@ -184,7 +184,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(eval(Ref("a"), circular2).isNaN())    
   }
 
-  test("Calculator.eval. Cyclic complex 2: a = 2b + a") {
+  test("Calculator#eval. Cyclic complex 2: a = 2b + a") {
     import Calculator.eval
     val references: Map[String, Signal[Expr]] = Map(
       "a" -> Signal(Plus(Times(Literal(2.0), Ref("b")), Literal(1.0))),
@@ -193,7 +193,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(eval(Ref("a"), references).isNaN())
   }
 
-  test("Calculator.eval. Rreferences. Simple.") {
+  test("Calculator#eval. Rreferences. Simple.") {
     import Calculator.eval
     val references1: Map[String, Signal[Expr]] = Map("a" -> Signal(Literal(0.0)), "b" -> Signal(Literal(1.0)))
     assert(Literal(eval(Ref("b"), references1)) == references1("b")())
@@ -203,7 +203,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(Literal(eval(Ref("c"), references2)) == references2("b")())
   }
   
-  test("Calculator.eval. Rreferences. Complex: a = 2b + 1") {
+  test("Calculator#eval. Rreferences. Complex: a = 2b + 1") {
     import Calculator.eval
     val references: Map[String, Signal[Expr]] = Map(
         "a" -> Signal(Plus(Times(Literal(2.0), Ref("b")), Literal(1.0))),  
@@ -212,7 +212,47 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
      assert(eval(Ref("a"), references) == 7.0)
   }
   
+  test("Calculator#computeValues. Simple.") {
+    import Calculator._
+    val a: Var[Expr] = Var(Literal(0.0))
+    val b: Var[Expr] = Var(Literal(0.0))        
+    val references: Map[String, Signal[Expr]] = Map("a" ->  a.asInstanceOf[Signal[Expr]], "b" -> b.asInstanceOf[Signal[Expr]])
+    val valuesSig = computeValues(references)
+    val origin = checkSignals(valuesSig)
     
+    reset; assert(checkSignals(valuesSig) === origin); a() = Literal(-1.0); assert(checkSignals(valuesSig) === Map("a" -> -1.0, "b" ->  0.0)) 
+    reset; assert(checkSignals(valuesSig) === origin); b() = Literal(-1.0); assert(checkSignals(valuesSig) === Map("a" ->  0.0, "b" -> -1.0))
+    
+    reset; assert(checkSignals(valuesSig) === origin)
+    a() = Ref("b")
+    b() = Literal(math.Pi)
+    assert(checkSignals(valuesSig) === Map("a" -> math.Pi, "b" ->  math.Pi)) 
+    
+    b() = Literal(math.E)
+    assert(checkSignals(valuesSig) === Map("a" -> math.E, "b" ->  math.E)) 
+    
+    def reset() = { a() = Literal(0.0); b() = Literal(0.0) }
+  }
+
+  test("Calculator#computeValues. Complex. a = 2b + 1") {
+    import Calculator._
+    val a: Var[Expr] = Var(Literal(0.0))
+    val b: Var[Expr] = Var(Literal(0.0))
+    val references: Map[String, Signal[Expr]] = Map("a" ->  a.asInstanceOf[Signal[Expr]], "b" -> b.asInstanceOf[Signal[Expr]])
+    val valuesSig = computeValues(references)
+    val origin = checkSignals(valuesSig)
+    
+    reset; assert(checkSignals(valuesSig) === origin)
+    a() = Plus(Times(Literal(2.0), Ref("b")), Literal(1.0))
+    b() = Literal(3.0)
+    assert(checkSignals(valuesSig) === Map("a" -> 7.0, "b" -> 3.0))
+    
+    b() = Literal(4.0)
+    assert(checkSignals(valuesSig) === Map("a" -> 9.0, "b" -> 4.0))
+    
+    def reset() = { a() = Literal(0.0); b() = Literal(0.0) }
+  }
+      
   private def delta(a: Double, b: Double, c: Double) =  b*b - 4*a*c
   private def solution(a: Double, b: Double, c: Double, d: Double): Set[Double] = {
       import math.sqrt
@@ -220,4 +260,7 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
       val x2 = (-b + sqrt(d)) / (2.0 * a)
       Set(x1, x2)
   }
+  
+  def checkSignals[T](signals: Map[String, Signal[T]]) = signals map { case (k, s) => (k -> s()) }
+
 }
