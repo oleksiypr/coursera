@@ -168,29 +168,39 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
        ), Map()) == 2.0)
     }
 
-  test("Calculator.eval. Rreferences. Simple.") {
-    import Calculator.eval
-    val references1: Map[String, Signal[Expr]] = Map("a" -> Signal(Literal(0.0)), "b" -> Signal(Literal(1.0)))
-    assert(Literal(eval(Ref("b"), references1)) == references1("b")())
-    assert(eval(Ref("c"), references1).isNaN())
-    
-    val references2: Map[String, Signal[Expr]] = references1 + ("c" -> Signal(Ref("b")))
-    assert(Literal(eval(Ref("c"), references2)) == references2("b")())
-  }
-  
-  test("Calculator.eval. Cyclic Rreferences.") { 
+  test("Calculator.eval. Cyclic simple:  a = b, b = a") { 
     import Calculator.eval
     val circular1: Map[String, Signal[Expr]] = Map("a" -> Signal(Ref("b")), "b" -> Signal(Ref("a")))
-    intercept[AssertionError] {
-      eval(Ref("a"), circular1)
-    }
-
+    assert(eval(Ref("a"), circular1).isNaN())
+  }
+  
+  test("Calculator.eval. Cyclic complex 1:  a = b, b = c, c = d, d = b") {  
+    import Calculator.eval
     val circular2: Map[String, Signal[Expr]] = Map(
         "a" -> Signal(Ref("b")), 
         "b" -> Signal(Ref("c")), 
         "c" -> Signal(Ref("d")), 
         "d" -> Signal(Ref("b")))
-    intercept[AssertionError] { eval(Ref("a"), circular2) } 
+    assert(eval(Ref("a"), circular2).isNaN())    
+  }
+
+  test("Calculator.eval. Cyclic complex 2: a = 2b + a") {
+    import Calculator.eval
+    val references: Map[String, Signal[Expr]] = Map(
+      "a" -> Signal(Plus(Times(Literal(2.0), Ref("b")), Literal(1.0))),
+      "b" -> Signal(Ref("a")))
+
+    assert(eval(Ref("a"), references).isNaN())
+  }
+
+  test("Calculator.eval. Rreferences. Simple.") {
+    import Calculator.eval
+    val references1: Map[String, Signal[Expr]] = Map("a" -> Signal(Literal(0.0)), "b" -> Signal(Literal(1.0)))
+    assert(Literal(eval(Ref("b"), references1)) == references1("b")())
+    assert(eval(Ref("c"), references1).isNaN())
+
+    val references2: Map[String, Signal[Expr]] = references1 + ("c" -> Signal(Ref("b")))
+    assert(Literal(eval(Ref("c"), references2)) == references2("b")())
   }
   
   test("Calculator.eval. Rreferences. Complex: a = 2b + 1") {
@@ -201,16 +211,6 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
         
      assert(eval(Ref("a"), references) == 7.0)
   }
-
-  test("Calculator.eval. Cyclic. Complex: a = 2b + a") {
-    import Calculator.eval
-    val references: Map[String, Signal[Expr]] = Map(
-      "a" -> Signal(Plus(Times(Literal(2.0), Ref("b")), Literal(1.0))),
-      //"a" -> Signal(Times(Literal(2.0), Ref("b"))),  
-      "b" -> Signal(Ref("a")))    
-      
-      assert(eval(Ref("a"), references).isNaN())
-  } 
   
     
   private def delta(a: Double, b: Double, c: Double) =  b*b - 4*a*c
