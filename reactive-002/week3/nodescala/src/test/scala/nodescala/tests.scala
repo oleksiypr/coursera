@@ -74,6 +74,45 @@ class NodeScalaSuite extends FunSuite {
       case _: Exception => assert(true)
     }
   }
+
+  test("Now") {
+    val always = Future.always("now")
+    assert(always.now == "now")
+
+    val never = Future.never
+    try {
+      never.now
+      assert(false)
+    } catch {
+      case ex: NoSuchElementException => assert(true)
+    }
+
+    val f = Future { Thread.sleep(100); "f" }
+    Thread.sleep(50)
+    try {
+      f.now
+      assert(false)
+    } catch {
+      case ex: NoSuchElementException => assert(true)
+    }
+    Thread.sleep(50)
+    assert(f.now == "f")
+  }
+
+  test("A Future continue with") {
+    val ok = Future { 1 }
+    def cont(f: Future[Int]): Int = 2
+    assert(Await.result(ok.continueWith(cont), 10 milli) == 2)
+
+    val fail = Future.failed[Int](new RuntimeException)
+    assert(Await.result(fail.continueWith(cont), 10 milli) == 2)
+  }
+
+  test("A Future continue") {
+    val f = Future { 1 }
+    def cont(f: Try[Int]): Int = 2
+    assert(Await.result(f.continue(cont), 10 milli) == 2)
+  }
   
   class DummyExchange(val request: Request) extends Exchange {
     @volatile var response = ""
