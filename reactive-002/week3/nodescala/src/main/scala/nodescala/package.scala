@@ -14,22 +14,37 @@ package object nodescala {
   /** Adds extensions methods to the `Future` companion object.
    */
   implicit class FutureCompanionOps(val f: Future.type) extends AnyVal {
-
     /** Returns a future that is always completed with `value`.
      */
-    def always[T](value: T): Future[T] = ???
+    def always[T](value: T): Future[T] = {
+      val p = Promise[T]()  
+      f(value) onComplete {p.complete(_)}
+      p.future
+    }
+    
     /** Returns a future that is never completed.
-     *
      *  This future may be useful when testing if timeout logic works correctly.
      */
-    def never[T]: Future[T] = ???
-    /** Given a list of futures `fs`, returns the future holding the list of values of all the futures from `fs`.
+    def never[T]: Future[T] = {
+      val p = Promise[T]()  
+      f(while (true) {}) onComplete {case _ => p.complete(???)}
+      p.future
+    }
+
+    /**
+     * Given a list of futures `fs`, returns the future holding the list of values of all the futures from `fs`.
      *  The returned future is completed only once all of the futures in `fs` have been completed.
      *  The values in the list are in the same order as corresponding futures `fs`.
      *  If any of the futures `fs` fails, the resulting future also fails.
      */
-    def all[T](fs: List[Future[T]]): Future[List[T]] = ???
-    /** Given a list of futures `fs`, returns the future holding the value of the future from `fs` that completed first.
+    def all[T](fs: List[Future[T]]): Future[List[T]] =
+      fs match {
+        case Nil => Future(Nil)
+        case f::fss => (for (x <- f; xs <- all(fss)) yield x::xs)
+      }
+
+    /**
+     * Given a list of futures `fs`, returns the future holding the value of the future from `fs` that completed first.
      *  If the first completing future in `fs` fails, then the result is failed as well.
      *
      *  E.g.:
@@ -38,11 +53,24 @@ package object nodescala {
      *
      *  may return a `Future` succeeded with `1`, `2` or failed with an `Exception`.
      */
-    def any[T](fs: List[Future[T]]): Future[T] = ???
+    def any[T](fs: List[Future[T]]): Future[T] = {
+      val p = Promise[T]()
+      def isCompleted = p.isCompleted
+      fs.foreach { _ onComplete {
+          x => if (!isCompleted) p.complete(x) 
+        }
+      }
+      p.future
+    }
 
-    /** Returns a future with a unit value that is completed after time `t`.
+    /**
+     * Returns a future with a unit value that is completed after time `t`.
      */
-    def delay(t: Duration): Future[Unit] = ???
+    def delay(t: Duration): Future[Unit] = Future {
+      blocking {
+        Thread.sleep(t.toMillis)
+      }
+    }
 
     /** Completes this future with user input.
      */
@@ -87,7 +115,8 @@ package object nodescala {
      *  The resulting future contains a value returned by `cont`.
      */
     def continue[S](cont: Try[T] => S): Future[S] = ???
-
+    
+    
   }
 
   /** Subscription objects are used to be able to unsubscribe

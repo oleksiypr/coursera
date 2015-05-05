@@ -14,24 +14,66 @@ import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class NodeScalaSuite extends FunSuite {
-
   test("A Future should always be completed") {
     val always = Future.always(517)
-
     assert(Await.result(always, 0 nanos) == 517)
   }
+  
   test("A Future should never be completed") {
     val never = Future.never[Int]
-
     try {
       Await.result(never, 1 second)
       assert(false)
     } catch {
       case t: TimeoutException => // ok!
     }
+  }  
+  
+  test("A Future should be completed aftre time `t`") {
+    val t0 = System.currentTimeMillis
+    val delayed = Future.delay(2 second)
+    val t1 = System.currentTimeMillis
+    try {
+      Await.result(delayed, 1 second)
+      assert(false)
+    } catch {
+      case t: TimeoutException => // ok!
+    }
+    Await.ready(delayed, 2 second)
+    assert(t1 - t0 <= (4 milli).toMillis)
   }
 
+  test("Any Future holding the value of the futures list that completed first") {
+    val f1 = Future { Thread.sleep(200); "f1" }
+    val f2 = Future { Thread.sleep( 50); "f2" }
+    val success  = Future.any(List(f1, f2))    
+    assert(Await.result(success, 55 millis) == "f2")    
+
+    val f3 = Future { Thread.sleep(20); "f3" }
+    val f4 = Future { Thread.sleep( 5); throw new Exception }
+    val fail = Future.any(List(f3, f4))
+    try {
+      val x = Await.result(fail, 10 millis)
+      assert(false)
+    } catch {
+      case t: TimeoutException => throw t
+      case _: Exception => assert(true)
+    }
+  }
   
+  test("All futures turns to future of all") {
+    val fs = List(Future.always(1), Future.always(2), Future.always(3))
+    assert(Await.result(Future.all(fs), 5 milli) === List(1, 2, 3))
+    
+    val fail = Future.all(List(Future.always(1), Future(throw new Exception)))
+    try {
+      Await.result(fail, 5 millis)
+      assert(false)
+    } catch {
+      case t: TimeoutException => throw t
+      case _: Exception => assert(true)
+    }
+  }
   
   class DummyExchange(val request: Request) extends Exchange {
     @volatile var response = ""
@@ -91,6 +133,7 @@ class NodeScalaSuite extends FunSuite {
       l.emit(req)
     }
   }
+
   test("Server should serve requests") {
     val dummy = new DummyServer(8191)
     val dummySubscription = dummy.start("/testDir") {
@@ -113,7 +156,6 @@ class NodeScalaSuite extends FunSuite {
 
     dummySubscription.unsubscribe()
   }
-
 }
 
 
