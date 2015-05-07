@@ -28,11 +28,9 @@ class NodeScalaSuite extends FunSuite {
       case t: TimeoutException => // ok!
     }
   }  
-  
+
   test("A Future should be completed aftre time `t`") {
-    val t0 = System.currentTimeMillis
     val delayed = Future.delay(2 second)
-    val t1 = System.currentTimeMillis
     try {
       Await.result(delayed, 1 second)
       assert(false)
@@ -40,7 +38,6 @@ class NodeScalaSuite extends FunSuite {
       case t: TimeoutException => // ok!
     }
     Await.ready(delayed, 2 second)
-    assert(t1 - t0 <= (4 milli).toMillis)
   }
 
   test("Any Future holding the value of the futures list that completed first") {
@@ -112,6 +109,20 @@ class NodeScalaSuite extends FunSuite {
     val f = Future { 1 }
     def cont(f: Try[Int]): Int = 2
     assert(Await.result(f.continue(cont), 10 milli) == 2)
+  }
+
+  test("Run future") {
+    val working = Future.run() { ct =>
+      Future {
+        var n = 0
+        while (ct.nonCancelled) {
+          n += 1
+        }
+      }
+    }
+    Future.delay(2 seconds) onSuccess {
+      case _ => working.unsubscribe()
+    }
   }
   
   class DummyExchange(val request: Request) extends Exchange {
@@ -195,8 +206,54 @@ class NodeScalaSuite extends FunSuite {
 
     dummySubscription.unsubscribe()
   }
+
+  test("Server should be stoppable if receives infinite  response") {
+    val dummy = new DummyServer(8191)
+    val dummySubscription = dummy.start("/testDir") {
+      request => Iterator.continually("a")
+    }
+
+    // wait until server is really installed
+    Thread.sleep(500)
+
+    val webpage = dummy.emit("/testDir", Map("Any" -> List("thing")))
+    try {
+      // let's wait some time
+      Await.result(webpage.loaded.future, 1 second)
+      fail("infinite response ended")
+    } catch {
+      case e: TimeoutException =>
+    }
+
+    // stop everything
+    dummySubscription.unsubscribe()
+    Thread.sleep(500)
+    webpage.loaded.future.now // should not get NoSuchElementException
+  }
+
+  test("Server should be able to handle two concurrent requests") {
+    val dummy = new DummyServer(8191)
+    val dummySubscription = dummy.start("/testDir") {
+      request =>
+        {
+          Thread.sleep(800)
+          Iterator.empty
+        }
+    }
+
+    // wait until server is really installed
+    Thread.sleep(500)
+
+    val webpage1 = dummy.emit("/testDir", Map("Any" -> List("thing")))
+    Thread.sleep(100) // allow new context to be created
+    val webpage2 = dummy.emit("/testDir", Map("Any" -> List("thing")))
+
+    // let's wait some time; this should load both pages
+    Await.result(webpage2.loaded.future, 1 second)
+
+    webpage2.loaded.future.now // should not get NoSuchElementException
+    dummySubscription.unsubscribe()
+  }
 }
-
-
 
 
