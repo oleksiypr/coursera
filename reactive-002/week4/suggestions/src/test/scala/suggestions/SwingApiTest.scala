@@ -1,7 +1,5 @@
 package suggestions
 
-
-
 import scala.collection._
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -70,13 +68,11 @@ class SwingApiTest extends FunSuite {
   
   test("SwingApi should emit text field values to the observable") {
     val textField = new swingApi.TextField
-    val values = textField.textValues
 
     val observed = mutable.Buffer[String]()
-    val sub = values subscribe {
+    textField.textValues subscribe {
       observed += _
     }
-
     // write some text now
     textField.text = "T"
     textField.text = "Tu"
@@ -88,18 +84,47 @@ class SwingApiTest extends FunSuite {
     assert(observed == Seq("T", "Tu", "Tur", "Turi", "Turin", "Turing"), observed)
   }
 
+  test("SwingApi should unsubscribe text field") {
+    val textField = new swingApi.TextField
+
+    val observed = mutable.Buffer[String]()
+    val sub = textField.textValues subscribe {
+      observed += _
+    }
+    textField.text = "subscribed"
+    sub.unsubscribe()
+    textField.text = "unsubscribed"
+
+    assert(sub.isUnsubscribed)
+    assert(observed == Seq("subscribed"), observed)
+  }
+
   test("SwingApi should emit buttom click to the observable") {
     val button = new swingApi.Button
-    val clicks = button.clicks
 
     val observed = mutable.Buffer[Button]()
-    val sub = clicks subscribe {
+    val sub = button.clicks subscribe {
       observed += _
     }
     button.click()
     button.click()
     button.click()
 
-    assert(observed == Seq(button, button, button), observed)
+    assert(observed === Seq(button, button, button), observed)
+  }
+
+  test("SwingApi should unsubscribe click") {
+    val button = new swingApi.Button
+
+    val observed = mutable.Buffer[Button]()
+    val sub = button.clicks subscribe {
+      observed += _
+    }
+    button.click()
+    sub.unsubscribe()
+    button.click()
+    
+    assert(sub.isUnsubscribed)
+    assert(observed === Seq(button), observed)
   }
 }
