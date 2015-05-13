@@ -33,11 +33,12 @@ trait WikipediaApi {
 
   implicit class StringObservableOps(obs: Observable[String]) {
 
-    /** Given a stream of search terms, returns a stream of search terms with spaces replaced by underscores.
+    /**
+     * Given a stream of search terms, returns a stream of search terms with spaces replaced by underscores.
      *
      * E.g. `"erik", "erik meijer", "martin` should become `"erik", "erik_meijer", "martin"`
      */
-    def sanitized: Observable[String] = ???
+    def sanitized: Observable[String] = obs map { _.replaceAll(" ", "_") }
 
   }
 
@@ -48,7 +49,7 @@ trait WikipediaApi {
      *
      * E.g. `1, 2, 3, !Exception!` should become `Success(1), Success(2), Success(3), Failure(Exception), !TerminateStream!`
      */
-    def recovered: Observable[Try[T]] = ???
+    def recovered: Observable[Try[T]] = obs map (Try(_)) onErrorReturn (Failure(_))
 
     /** Emits the events from the `obs` observable, until `totalSec` seconds have elapsed.
      *

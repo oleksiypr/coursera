@@ -1,7 +1,5 @@
 package suggestions
 
-
-
 import language.postfixOps
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -10,7 +8,6 @@ import scala.util.{Try, Success, Failure}
 import rx.lang.scala._
 import org.scalatest._
 import gui._
-
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
@@ -39,17 +36,38 @@ class WikipediaApiTest extends FunSuite {
 
     var count = 0
     var completed = false
-
     val sub = valid.subscribe(
       term => {
         assert(term.forall(_ != ' '))
         count += 1
       },
-      t => assert(false, s"stream error $t"),
+      th => assert(false, s"stream error $th"),
       () => completed = true
     )
     assert(completed && count == 3, "completed: " + completed + ", event count: " + count)
   }
+
+  test("WikipediaApi should correctly use recovered") {
+    val ex = new RuntimeException
+    val notvalid = Observable.just(1, 2, 3, ex, 4) map {
+      case n: Int              => n
+      case e: RuntimeException => throw e
+    }
+    val valid = notvalid.recovered
+
+    var actual = List[Try[Any]]()
+    var completed = false
+    var noError = true
+    val sub = valid.subscribe(
+      x => actual = actual :+ x,
+      err => noError = false,
+      () => completed = true)
+
+    assert(noError, "error arisen")
+    assert(completed)
+    assert(actual === List(Success(1), Success(2), Success(3), Failure(ex)))
+  }
+    
   test("WikipediaApi should correctly use concatRecovered") {
     val requests = Observable.just(1, 2, 3)
     val remoteComputation = (n: Int) => Observable.just(0 to n : _*)
@@ -66,5 +84,4 @@ class WikipediaApiTest extends FunSuite {
     }
     assert(total == (1 + 1 + 2 + 1 + 2 + 3), s"Sum: $total")
   }
-
 }
