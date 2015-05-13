@@ -10,6 +10,7 @@ import org.scalatest._
 import gui._
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
+import akka.dispatch.OnComplete
 
 
 @RunWith(classOf[JUnitRunner])
@@ -67,7 +68,17 @@ class WikipediaApiTest extends FunSuite {
     assert(completed)
     assert(actual === List(Success(1), Success(2), Success(3), Failure(ex)))
   }
+  
+  test("WikipediaApi should correctly use timedOut") {
+    val events1 = Observable.interval(1 second)
+    val to = events1 timedOut 3L
+    assert(to.toBlocking.toList === List(0, 1))
     
+    val events2 = Observable.interval(1 second) take 1
+    val before = events2 timedOut 3L
+    assert(before.toBlocking.toList === List(0))
+  }
+  
   test("WikipediaApi should correctly use concatRecovered") {
     val requests = Observable.just(1, 2, 3)
     val remoteComputation = (n: Int) => Observable.just(0 to n : _*)
@@ -83,5 +94,9 @@ class WikipediaApiTest extends FunSuite {
       s => total = s
     }
     assert(total == (1 + 1 + 2 + 1 + 2 + 3), s"Sum: $total")
+    
+    val repeatedRequests = Observable.just(1, 2, 3).concatRecovered(num => Observable.just(num, num))
+    assert(repeatedRequests.toBlocking.toList === 
+      List(Success(1), Success(1), Success(2), Success(2), Success(3), Success(3)))
   }
 }
