@@ -40,7 +40,7 @@ package object nodescala {
      */
     def all[T](fs: List[Future[T]]): Future[List[T]] =
       fs.foldRight(Future.always(List[T]())) {
-        (f, acc) => for (tail <- acc; head <- f) yield head :: tail
+        (f, acc) => for (tail <- acc; head <- f) yield head::tail
       }
 
     /**
