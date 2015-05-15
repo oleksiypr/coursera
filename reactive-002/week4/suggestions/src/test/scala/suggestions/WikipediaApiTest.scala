@@ -99,4 +99,12 @@ class WikipediaApiTest extends FunSuite {
     assert(repeatedRequests.toBlocking.toList === 
       List(Success(1), Success(1), Success(2), Success(2), Success(3), Success(3)))
   }
+  
+  test("WikipediaApi should correctly compose the streams that have errors using concatRecovered") {
+    val ex = new RuntimeException
+    val requests = Observable.just(1, 2, 3, 4, 5) 
+    val remoteComputation = (n: Int) => if (n != 4) Observable.just(n) else Observable.error(ex)
+    val result = requests.concatRecovered(remoteComputation) 
+    assert(List(Success(1), Success(2), Success(3), Failure(ex), Success(5)) === result.toBlocking.toList)
+  }
 }

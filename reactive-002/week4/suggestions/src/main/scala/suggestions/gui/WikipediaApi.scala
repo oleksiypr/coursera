@@ -84,7 +84,7 @@ trait WikipediaApi {
      *
      * Observable(Success(1), Succeess(1), Succeess(1), Succeess(2), Succeess(2), Succeess(2), Succeess(3), Succeess(3), Succeess(3))
      */
-    def concatRecovered[S](requestMethod: T => Observable[S]): Observable[Try[S]] = (obs map requestMethod concat) recovered
+    def concatRecovered[S](requestMethod: T => Observable[S]): Observable[Try[S]] = obs flatMap (requestMethod(_).recovered)
   }
 }
 

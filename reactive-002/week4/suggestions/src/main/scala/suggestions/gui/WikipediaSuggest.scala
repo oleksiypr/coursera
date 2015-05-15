@@ -91,14 +91,15 @@ object WikipediaSuggest extends SimpleSwingApplication with ConcreteSwingApi wit
 
     val selections: Observable[String] = button.clicks  
       .filter(click => suggestionList.selection.items.nonEmpty)
-      .map (selectinClick => suggestionList.selection.items.head)
+      .map(selectinClick => suggestionList.selection.items.head)
 
-    // TO IMPLEMENT
-    val pages: Observable[Try[String]] = ???
+    val pages: Observable[Try[String]] = selections concatRecovered wikiPageResponseStream
 
-    // TO IMPLEMENT
     val pageSubscription: Subscription = pages.observeOn(eventScheduler) subscribe {
-      x => ???
+      _ match {
+        case Success(results) => editorpane.text = results
+        case Failure(th)      => status.text = th.getMessage
+      }
     }
   }
 }
