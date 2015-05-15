@@ -8,7 +8,6 @@ trait IntHeap extends Heap {
 }
 
 // http://www.brics.dk/RS/96/37/BRICS-RS-96-37.pdf
-
 // Figure 1, page 3
 trait Heap {
   type H // type of a heap
