@@ -61,12 +61,13 @@ class BinaryTreeSet extends Actor {
   // optional
   var pendingQueue = Queue.empty[Operation]
 
-  // optional
   def receive = normal
 
-  // optional
   /** Accepts `Operation` and `GC` messages. */
-  val normal: Receive = { case _ => ??? }
+  val normal: Receive = {
+    case operation: Operation => root ! operation
+    case GC => ???     
+  }
 
   // optional
   /** Handles messages while garbage collection is performed.
@@ -96,18 +97,33 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
   var subtrees = Map[Position, ActorRef]()
   var removed = initiallyRemoved
 
-  // optional
   def receive = normal
 
-  // optional
   /** Handles `Operation` messages and `CopyTo` requests. */
-  val normal: Receive = { case _ => ??? }
+  val normal: Receive = {
+    //TODO draw actors diagram
+    case operation @ Contains(requester, id, elem) =>
+      if (elem > this.elem) {
+        ???
+      } else if (elem < this.elem) {
+        ???
+      } else {
+        ???
+        //TODO check if not removed
+      }
+
+      
+    case _ => ???
+  }
 
   // optional
   /** `expected` is the set of ActorRefs whose replies we are waiting for,
     * `insertConfirmed` tracks whether the copy of this node to the new tree has been confirmed.
     */
   def copying(expected: Set[ActorRef], insertConfirmed: Boolean): Receive = ???
-
-
+  
+  def search(operation: Operation, pos: Position)(onNotFound: OperationReply, requester: ActorRef) {
+    if (subtrees.contains(pos)) subtrees(pos) ! operation
+    else requester ! onNotFound
+  }
 }
