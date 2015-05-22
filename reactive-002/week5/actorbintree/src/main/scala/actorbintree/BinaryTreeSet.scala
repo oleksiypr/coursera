@@ -60,8 +60,6 @@ class BinaryTreeSet extends Actor {
   def createRoot: ActorRef = context.actorOf(BinaryTreeNode.props(0, initiallyRemoved = true))
 
   var root = createRoot
-
-  // optional
   var pendingQueue = Queue.empty[Operation]
 
   def receive = normal
@@ -69,16 +67,27 @@ class BinaryTreeSet extends Actor {
   /** Accepts `Operation` and `GC` messages. */
   val normal: Receive = {
     case operation: Operation => root ! operation
-    case GC                   => ???
+    case GC                   => {
+      val newRoot: ActorRef = ???
+      root ! CopyTo(newRoot) 
+      context.become(garbageCollecting(newRoot))
+    }
   }
 
-  // optional
   /**
    * Handles messages while garbage collection is performed.
    * `newRoot` is the root of the new binary tree where we want to copy
    * all non-removed elements into.
    */
-  def garbageCollecting(newRoot: ActorRef): Receive = ???
+  def garbageCollecting(newRoot: ActorRef): Receive = {
+    case CopyFinished  => {
+      context.become(normal)
+      //TODO: perform dequeue
+      //TODO: perform stop
+      ???
+    }
+    case op: Operation => pendingQueue = pendingQueue enqueue op
+  }
 
 }
 
@@ -128,14 +137,15 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
             requester ! OperationFinished(id)
           })
       
-    case GC => ???
+    case CopyTo(node) => ???
   }
 
-  // optional
   /**
    * `expected` is the set of ActorRefs whose replies we are waiting for,
    * `insertConfirmed` tracks whether the copy of this node to the new tree has been confirmed.
    */
+  //TODO pass expected as set of values from subtrees
+  //TODO pass insertConfirmed as !removed
   def copying(expected: Set[ActorRef], insertConfirmed: Boolean): Receive = ???
 
   private def search(operation: Operation)(finalAction: Position => Unit, foundAction: () => Unit) {
