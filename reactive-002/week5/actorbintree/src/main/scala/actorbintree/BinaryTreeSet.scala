@@ -107,7 +107,7 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
     case cont @ Contains(requester, id, elem) =>
       search(cont)(
         finalAction = _ => requester ! ContainsResult(id, false),
-        foundAction = (id: Int) => requester ! ContainsResult(id, !removed))
+        foundAction = () => requester ! ContainsResult(id, !removed))
 
     case ins @ Insert(requester: ActorRef, id: Int, elem: Int) =>
       search(ins)(
@@ -115,10 +115,18 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
           subtrees += p -> context.actorOf(BinaryTreeNode.props(elem, initiallyRemoved = false))
           requester ! OperationFinished(id)
         },
-        foundAction = (id: Int) => {
+        foundAction = () => {
           removed = false
           requester ! OperationFinished(id)
         })
+        
+    case rem @ Remove(requester, id, elem) =>
+      search(rem)(
+          finalAction = _ => requester ! OperationFinished(id),
+          foundAction = () => {
+            removed = true
+            requester ! OperationFinished(id)
+          })
       
     case GC => ???
   }
@@ -130,16 +138,15 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
    */
   def copying(expected: Set[ActorRef], insertConfirmed: Boolean): Receive = ???
 
-  private def search(operation: Operation)(finalAction: Position => Unit, foundAction: Int => Unit) {
+  private def search(operation: Operation)(finalAction: Position => Unit, foundAction: () => Unit) {
     val elem = operation.elem
-    val id = operation.id
     val requester = operation.requester
 
-    if (elem > this.elem) checkTo(Right)
-    if (elem < this.elem) checkTo(Left)
-    if (elem == this.elem) foundAction(id)
+    if (elem > this.elem) check(Right)
+    if (elem < this.elem) check(Left)
+    if (elem == this.elem) foundAction()
 
-    def checkTo(p: Position) {
+    def check(p: Position) {
       subtrees.get(p) match {
         case Some(subTree) => subTree ! operation
         case None          => finalAction(p)
