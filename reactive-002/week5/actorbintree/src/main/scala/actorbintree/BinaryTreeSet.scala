@@ -68,7 +68,7 @@ class BinaryTreeSet extends Actor {
   val normal: Receive = {
     case operation: Operation => root ! operation
     case GC                   => {
-      val newRoot: ActorRef = ???
+      val newRoot: ActorRef = createRoot
       root ! CopyTo(newRoot) 
       context.become(garbageCollecting(newRoot))
     }
