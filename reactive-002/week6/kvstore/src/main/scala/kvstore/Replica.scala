@@ -35,7 +35,8 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   import Replicator._
   import Persistence._
   import context.dispatcher
-
+  arbiter ! Join
+  
   /*
    * The contents of this actor is just a suggestion, you can implement it in any way you like.
    */
