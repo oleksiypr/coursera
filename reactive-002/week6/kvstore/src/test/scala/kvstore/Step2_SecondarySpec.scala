@@ -36,8 +36,8 @@ class Step2_SecondarySpec extends TestKit(ActorSystem("Step2SecondarySpec"))
 
     val arbiter = TestProbe()
     val replicator = TestProbe()
-        val secondary = system.actorOf(Replica.props(arbiter.ref, Persistence.props(flaky = false)), "case2-secondary")
-        val client = session(secondary)
+    val secondary = system.actorOf(Replica.props(arbiter.ref, Persistence.props(flaky = false)), "case2-secondary")
+    val client = session(secondary)
 
     arbiter.expectMsg(Join)
     arbiter.send(secondary, JoinedSecondary)

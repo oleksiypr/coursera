@@ -19,14 +19,15 @@ class Replicator(val replica: ActorRef) extends Actor {
   import Replicator._
   import Replica._
   import context.dispatcher
-  
-  /*
-   * The contents of this actor is just a suggestion, you can implement it in any way you like.
-   */
 
-  // map from sequence number to pair of sender and request
+  /**
+   * Map from sequence number to pair of sender and request
+   */
   var acks = Map.empty[Long, (ActorRef, Replicate)]
-  // a sequence of not-yet-sent snapshots (you can disregard this if not implementing batching)
+  
+  /**
+   * A sequence of not-yet-sent snapshots (you can disregard this if not implementing batching)
+   */
   var pending = Vector.empty[Snapshot]
   
   var _seqCounter = 0L
@@ -41,5 +42,4 @@ class Replicator(val replica: ActorRef) extends Actor {
   def receive: Receive = {
     case _ =>
   }
-
 }

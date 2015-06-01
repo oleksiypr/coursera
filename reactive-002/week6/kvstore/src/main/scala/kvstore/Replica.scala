@@ -35,21 +35,22 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   import Replicator._
   import Persistence._
   import context.dispatcher
+  
   arbiter ! Join
   
   var kv = Map.empty[String, String]
   
   /**
-   * A map from secondary replicas to replicators
+   * A map from secondary replicas to replicators.
    */
   var secondaries = Map.empty[ActorRef, ActorRef]
   
-  
   /**
-   * The current set of replicators
+   * The current set of replicators.
    */
   var replicators = Set.empty[ActorRef]
-
+  
+  var expectd = 0L;
 
   def receive = {
     case JoinedPrimary   => context.become(leader)
@@ -57,20 +58,41 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   }
 
   //TODO: solve step 5
-  val leader: Receive = {
-    case Insert(k, v, id) => operationAck(id)(perform = { kv += (k -> v) })
-    case Remove(k, id)    => operationAck(id)(perform = { kv -= k })
-    case Get(k, id)       => sender ! GetResult(k, kv.get(k), id)
-  }
+  val leader: Receive = { case operation: Operation => handleOperation(operation) }
 
-  //TODO: solve step 2
+  //TODO: solve step 4
   val replica: Receive = {
-    case _ =>
+    case Get(k, id)               => sender ! GetResult(k, kv.get(k), id)
+    case Snapshot(k, valOpt, seq) => handleSnapshot(k, valOpt, seq)
+  }
+  
+  private def handleOperation(operation: Operation) {
+    val perform =  operationAck(operation.id)
+    operation match {
+      case Insert(k, v, id) => perform { kv += (k -> v) } 
+      case Remove(k, id)    => perform { kv -= k }
+      case Get(k, id)       => sender ! GetResult(k, kv.get(k), id)
+    }
+  }  
+  
+  private def handleSnapshot(key: String, valueOption: Option[String], seq: Long) {
+    val perform = snapshotAck(key, seq)
+    if (seq > expectd) ()
+    else if (seq < expectd) sender ! SnapshotAck(key, seq)
+    else {
+      valueOption match {
+        case Some(v) => perform { kv += (key -> v) }
+        case None    => perform { kv -= key }
+      }
+      expectd += 1
+    }
   }
 
-  private def operationAck(id: Long)(perform: => Unit) {
+  private def operationAck(id: Long) = acknowledge(OperationAck(id))_
+  private def snapshotAck(key: String, seq: Long) = acknowledge(SnapshotAck(key, seq))_
+  private def acknowledge(msg: AnyRef)(perform: => Unit) {
     perform
-    sender ! OperationAck(id)
+    sender ! msg
   }
 }
 
