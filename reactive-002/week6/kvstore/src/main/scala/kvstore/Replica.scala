@@ -66,11 +66,14 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     case Snapshot(k, valOpt, seq) => handleSnapshot(k, valOpt, seq)
   }
   
+  private val insert = (key: String, value: String) => kv += (key -> value)
+  private val remove = (key: String) =>  kv -= key
+  
   private def handleOperation(operation: Operation) {
     val perform =  operationAck(operation.id)
     operation match {
-      case Insert(k, v, id) => perform { kv += (k -> v) } 
-      case Remove(k, id)    => perform { kv -= k }
+      case Insert(k, v, id) => perform { insert(k, v) } 
+      case Remove(k, id)    => perform { remove(k) }
       case Get(k, id)       => sender ! GetResult(k, kv.get(k), id)
     }
   }  
@@ -81,8 +84,8 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     else if (seq < expectd) sender ! SnapshotAck(key, seq)
     else {
       valueOption match {
-        case Some(v) => perform { kv += (key -> v) }
-        case None    => perform { kv -= key }
+        case Some(v) => perform { insert(key, v) } 
+        case None    => perform { remove(key) }
       }
       expectd += 1
     }
