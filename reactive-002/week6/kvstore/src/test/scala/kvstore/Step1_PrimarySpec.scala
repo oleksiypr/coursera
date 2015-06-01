@@ -17,7 +17,7 @@ import org.scalactic.ConversionCheckedTripleEquals
 
 class Step1_PrimarySpec extends TestKit(ActorSystem("Step1PrimarySpec"))
     with FunSuiteLike
-        with BeforeAndAfterAll
+    with BeforeAndAfterAll
     with Matchers
     with ConversionCheckedTripleEquals
     with ImplicitSender

@@ -37,14 +37,17 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   import context.dispatcher
   arbiter ! Join
   
-  /*
-   * The contents of this actor is just a suggestion, you can implement it in any way you like.
-   */
-  
   var kv = Map.empty[String, String]
-  // a map from secondary replicas to replicators
+  
+  /**
+   * A map from secondary replicas to replicators
+   */
   var secondaries = Map.empty[ActorRef, ActorRef]
-  // the current set of replicators
+  
+  
+  /**
+   * The current set of replicators
+   */
   var replicators = Set.empty[ActorRef]
 
 
@@ -53,15 +56,21 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     case JoinedSecondary => context.become(replica)
   }
 
-  /* TODO Behavior for  the leader role. */
+  //TODO: solve step 5
   val leader: Receive = {
-    case _ =>
+    case Insert(k, v, id) => operationAck(id)(perform = { kv += (k -> v) })
+    case Remove(k, id)    => operationAck(id)(perform = { kv -= k })
+    case Get(k, id)       => sender ! GetResult(k, kv.get(k), id)
   }
 
-  /* TODO Behavior for the replica role. */
+  //TODO: solve step 2
   val replica: Receive = {
     case _ =>
   }
 
+  private def operationAck(id: Long)(perform: => Unit) {
+    perform
+    sender ! OperationAck(id)
+  }
 }
 
