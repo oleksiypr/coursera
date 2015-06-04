@@ -72,17 +72,17 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     case Snapshot(k, valOpt, seq) => {
       secondaries += self -> sender
       handleSnapshot(k, valOpt, seq)
-      persistence ! Persist(k, valOpt, seq)
     }
     case Persisted(key, id) => {
+      //println(s"persistence ! Persisted($key, $id)")
       secondaries(self) ! SnapshotAck(key, id)
     }
   }
   
-  private val insert = (key: String, value: String) => kv += (key -> value)
-  private val remove = (key: String) =>  kv -= key
+  val insert = (key: String, value: String) => kv += (key -> value)
+  val remove = (key: String) =>  kv -= key
   
-  private def handleOperation(operation: Operation) {
+  def handleOperation(operation: Operation) {
     val perform =  operationAck(operation.id)
     operation match {
       case Insert(k, v, id) => perform { insert(k, v) } 
@@ -91,7 +91,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     }
   }  
   
-  private def handleSnapshot(key: String, valueOption: Option[String], seq: Long) {
+  def handleSnapshot(key: String, valueOption: Option[String], seq: Long) {
     def perform(action: => Unit) {
       action
       //sender ! SnapshotAck(key, seq)
@@ -103,13 +103,15 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
         case Some(v) => perform { insert(key, v) } 
         case None    => perform { remove(key) }
       }
+      //println(s"persistence ! Persist($key, $valueOption, $seq)")
+      persistence ! Persist(key, valueOption, seq)
       expectd += 1
     }
   }
 
-  private def operationAck(id: Long) = acknowledge(OperationAck(id))_
-  private def snapshotAck(key: String, seq: Long) = acknowledge(SnapshotAck(key, seq))_
-  private def acknowledge(msg: AnyRef)(perform: => Unit) {
+  def operationAck(id: Long) = acknowledge(OperationAck(id))_
+  def snapshotAck(key: String, seq: Long) = acknowledge(SnapshotAck(key, seq))_
+  def acknowledge(msg: AnyRef)(perform: => Unit) {
     perform
     sender ! msg
   }
