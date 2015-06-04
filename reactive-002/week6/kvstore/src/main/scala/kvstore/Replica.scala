@@ -12,8 +12,6 @@ import akka.actor.PoisonPill
 import akka.actor.OneForOneStrategy
 import akka.actor.SupervisorStrategy
 import akka.util.Timeout
-import akka.actor.Cancellable
-import scala.language.postfixOps
 
 object Replica {
   sealed trait Operation {
@@ -40,9 +38,6 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   
   arbiter ! Join
   
-  /**
-   * Replica storage
-   */
   var kv = Map.empty[String, String]
   
   /**
@@ -54,19 +49,15 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
    * The current set of replicators.
    */
   var replicators = Set.empty[ActorRef]
-
-  /**
-   * Map from sequence number to cancellable tokens for Persist retry scheduled
-   */
-  var cancellables = Map.empty[Long, Cancellable]
   
   var expectd = 0L;
+
   val persistence = context.actorOf(persistenceProps, "persistence")
 
   override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 5) {
     case _: PersistenceException => Restart
   }
-
+  
   def receive = {
     case JoinedPrimary   => context.become(leader)
     case JoinedSecondary => context.become(replica)
@@ -74,22 +65,17 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
 
   //TODO: solve step 5
   val leader: Receive = { case operation: Operation => handleOperation(operation) }
-  
-  //TODO fix step 2
+
+  //TODO: solve step 4
   val replica: Receive = {
     case Get(k, id)               => sender ! GetResult(k, kv.get(k), id)
     case Snapshot(k, valOpt, seq) => {
       secondaries += self -> sender
-            
-      def retry = persistence ! Persist(k, valOpt, seq)
-      cancellables += seq -> context.system.scheduler.schedule(0 nanos, 100 milliseconds)(retry)      
       handleSnapshot(k, valOpt, seq)
+      persistence ! Persist(k, valOpt, seq)
     }
     case Persisted(key, id) => {
-      cancellables -= id  
-      expectd += 1
       secondaries(self) ! SnapshotAck(key, id)
-      //expectd += 1
     }
   }
   
@@ -106,22 +92,26 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   }  
   
   private def handleSnapshot(key: String, valueOption: Option[String], seq: Long) {
-    val perform = snapshotAck(key, seq)
+    def perform(action: => Unit) {
+      action
+      //sender ! SnapshotAck(key, seq)
+    }
     if (seq > expectd) ()
-    else if (seq < expectd) secondaries(self) ! SnapshotAck(key, seq)
+    else if (seq < expectd) sender ! SnapshotAck(key, seq)
     else {
       valueOption match {
         case Some(v) => perform { insert(key, v) } 
         case None    => perform { remove(key) }
       }
-      //expectd += 1
+      expectd += 1
     }
   }
 
   private def operationAck(id: Long) = acknowledge(OperationAck(id))_
   private def snapshotAck(key: String, seq: Long) = acknowledge(SnapshotAck(key, seq))_
-  private def acknowledge(msg: AnyRef)(perform: => Unit) { perform }
-  
-  override def postStop() = cancellables.values foreach { _.cancel() }
+  private def acknowledge(msg: AnyRef)(perform: => Unit) {
+    perform
+    sender ! msg
+  }
 }
 
