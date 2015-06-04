@@ -3,11 +3,13 @@ package kvstore
 import akka.actor.{ OneForOneStrategy, Props, ActorRef, Actor }
 import kvstore.Arbiter._
 import scala.collection.immutable.Queue
+import scala.language.postfixOps
 import akka.actor.SupervisorStrategy.Restart
 import scala.annotation.tailrec
 import akka.pattern.{ ask, pipe }
 import akka.actor.Terminated
 import scala.concurrent.duration._
+import akka.actor.Cancellable
 import akka.actor.PoisonPill
 import akka.actor.OneForOneStrategy
 import akka.actor.SupervisorStrategy
@@ -50,9 +52,17 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
    */
   var replicators = Set.empty[ActorRef]
   
-  var expectd = 0L;
-
+  /**
+   * Map from sequence number to cancellable tokens for Persist retry scheduled
+   */
+  var cancellables = Map.empty[Long, Cancellable]
+  
+  /**
+   * A persistence actor to be supervised by this replica.
+   */
   val persistence = context.actorOf(persistenceProps, "persistence")
+  
+  var expectd = 0L;
 
   override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 5) {
     case _: PersistenceException => Restart
@@ -66,7 +76,6 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   //TODO: solve step 5
   val leader: Receive = { case operation: Operation => handleOperation(operation) }
 
-  //TODO: solve step 4
   val replica: Receive = {
     case Get(k, id)               => sender ! GetResult(k, kv.get(k), id)
     case Snapshot(k, valOpt, seq) => {
@@ -74,7 +83,8 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
       handleSnapshot(k, valOpt, seq)
     }
     case Persisted(key, id) => {
-      //println(s"persistence ! Persisted($key, $id)")
+      cancellables(id).cancel()
+      cancellables -= id
       secondaries(self) ! SnapshotAck(key, id)
     }
   }
@@ -92,10 +102,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   }  
   
   def handleSnapshot(key: String, valueOption: Option[String], seq: Long) {
-    def perform(action: => Unit) {
-      action
-      //sender ! SnapshotAck(key, seq)
-    }
+    def perform(action: => Unit) { action }
     if (seq > expectd) ()
     else if (seq < expectd) sender ! SnapshotAck(key, seq)
     else {
@@ -103,17 +110,18 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
         case Some(v) => perform { insert(key, v) } 
         case None    => perform { remove(key) }
       }
-      //println(s"persistence ! Persist($key, $valueOption, $seq)")
-      persistence ! Persist(key, valueOption, seq)
+      def retry = persistence ! Persist(key, valueOption, seq)
+      cancellables += seq -> context.system.scheduler.schedule(0 nanos, 100 milliseconds)(retry)       
       expectd += 1
     }
   }
 
   def operationAck(id: Long) = acknowledge(OperationAck(id))_
-  def snapshotAck(key: String, seq: Long) = acknowledge(SnapshotAck(key, seq))_
   def acknowledge(msg: AnyRef)(perform: => Unit) {
     perform
     sender ! msg
   }
+  
+  override def postStop() = cancellables.values foreach { _.cancel() }
 }
 
