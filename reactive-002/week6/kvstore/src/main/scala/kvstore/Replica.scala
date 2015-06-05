@@ -65,7 +65,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   /**
    * A persistence actor to be supervised by this replica.
    */
-  val persistence = context.actorOf(persistenceProps, "persistence")
+  val persistence = context.watch(context.actorOf(persistenceProps, "persistence"))
   
   var expectd = 0L;
 
@@ -107,14 +107,20 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   val remove = (key: String) =>  kv -= key
   
   def handleOperation(operation: Operation) {
-    def perform(valOpt: Option[String])(action: => Unit) { 
-      action
-      schedule(operation.id) {persistence ! Persist(operation.key, valOpt, operation.id)}
-    }
     operation match {
-      case Insert(k, v, id) => perform(Some(v)) { insert(k, v) } 
-      case Remove(k, id)    => perform(None) { remove(k) }
+      case Insert(k, v, id) => perform(Some(v)) { insert(k, v) }
+      case Remove(k, id)    => perform(None)    { remove(k) }
       case Get(k, id)       => sender ! GetResult(k, kv.get(k), id)
+    }
+    def perform(valOpt: Option[String])(action: => Unit) {
+      action
+      schedule(operation.id) { persistence ! Persist(operation.key, valOpt, operation.id) }
+      timeOut(1 second)
+    }
+    def timeOut(max: FiniteDuration) = {
+      context.system.scheduler.scheduleOnce(1 second) {
+        if (requesters.contains(operation.id)) requesters(operation.id) ! OperationFailed(operation.id)
+      }
     }
   }  
   
@@ -127,7 +133,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
         case Some(v) => perform { insert(key, v) } 
         case None    => perform { remove(key) }
       }
-      schedule(seq) {persistence ! Persist(key, valueOption, seq)}      
+      schedule(seq) { persistence ! Persist(key, valueOption, seq) }      
       expectNext()
     }
   }
@@ -135,7 +141,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   
   def schedule(id: Long)(retry: => Unit) {
     cancellables += id -> context.system.scheduler.schedule(0 nanos, 100 milliseconds)(retry)  
-  }    
+  }
   def cancelRetry(id: Long) {
     cancellables(id).cancel()
     cancellables -= id

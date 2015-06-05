@@ -15,7 +15,7 @@ import org.scalactic.ConversionCheckedTripleEquals
 
 class Step5_PrimaryPersistenceSpec extends TestKit(ActorSystem("Step5PrimaryPersistenceSpec"))
     with FunSuiteLike
-        with BeforeAndAfterAll
+    with BeforeAndAfterAll
     with Matchers
     with ConversionCheckedTripleEquals
     with ImplicitSender
