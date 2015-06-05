@@ -63,6 +63,11 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   var requesters = Map.empty[Long, ActorRef]
   
   /**
+   * Map from operation id to replicators pending for acknowledgement
+   */
+  var pendings = Map.empty[Long, Set[ActorRef]]
+  
+  /**
    * A persistence actor to be supervised by this replica.
    */
   val persistence = context.watch(context.actorOf(persistenceProps, "persistence"))
@@ -78,7 +83,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     case JoinedSecondary => context.become(replica)
   }
 
-  //TODO: solve step 5
+  //TODO Step 6
   val leader: Receive = { 
     case operation: Operation => {
       requesters += operation.id -> sender
@@ -86,8 +91,20 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     }
     case Persisted(key, id) => {
       cancelRetry(id)
-      requesters(id) ! OperationAck(id)
-      requesters -= id
+      if (noPendindsFor(id)) {
+        acknowledgeOperation(id)   
+      }      
+    }
+    case Replicas(relicas) => {
+      (relicas - self) foreach { secondary =>
+        secondaries += secondary -> replicator(secondary)
+      }
+    }
+    case Replicated(_, id) => {
+      updatePending(id)
+      if (!cancellables.contains(id) && noPendindsFor(id)) {
+        acknowledgeOperation(id) 
+      }
     }
   }
 
@@ -115,7 +132,11 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     def perform(valOpt: Option[String])(action: => Unit) {
       action
       schedule(operation.id) { persistence ! Persist(operation.key, valOpt, operation.id) }
+      pendings += operation.id -> secondaries.values.toSet
+      secondaries.values foreach relicate 
       timeOut(1 second)
+      
+      def relicate(replicator: ActorRef) = replicator ! Replicate(operation.key, valOpt, operation.id)
     }
     def timeOut(max: FiniteDuration) = {
       context.system.scheduler.scheduleOnce(1 second) {
@@ -125,20 +146,28 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   }  
   
   def handleSnapshot(key: String, valueOption: Option[String], seq: Long) {
-    def perform(action: => Unit) { action }
     if (seq > expectd) ()
     else if (seq < expectd) sender ! SnapshotAck(key, seq)
     else {
       valueOption match {
-        case Some(v) => perform { insert(key, v) } 
-        case None    => perform { remove(key) }
+        case Some(v) => insert(key, v)  
+        case None    => remove(key) 
       }
       schedule(seq) { persistence ! Persist(key, valueOption, seq) }      
       expectNext()
     }
   }
 
-  
+  def acknowledgeOperation(id: Long) {
+    requesters(id) ! OperationAck(id)
+    requesters -= id
+  }
+  def replicator(secondary: ActorRef) = context.actorOf(Replicator.props(secondary))  
+  def updatePending(id: Long) {
+    pendings += id -> (pendings(id) - sender)
+    if (pendings(id).isEmpty) pendings -= id
+  }
+  def noPendindsFor(id: Long) = !pendings.contains(id) || pendings(id).isEmpty
   def schedule(id: Long)(retry: => Unit) {
     cancellables += id -> context.system.scheduler.schedule(0 nanos, 100 milliseconds)(retry)  
   }
@@ -149,4 +178,3 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   def expectNext() = expectd += 1 
   override def postStop() = cancellables.values foreach { _.cancel() }
 }
-
