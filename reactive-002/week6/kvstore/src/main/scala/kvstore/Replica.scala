@@ -85,6 +85,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
       handleOperation(operation) 
     }
     case Persisted(key, id) => {
+      cancelRetry(id)
       requesters(id) ! OperationAck(id)
       requesters -= id
     }
@@ -97,8 +98,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
       handleSnapshot(k, valOpt, seq)
     }
     case Persisted(key, id) => {
-      cancellables(id).cancel()
-      cancellables -= id
+      cancelRetry(id)
       secondaries(self) ! SnapshotAck(key, id)
     }
   }
@@ -109,7 +109,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   def handleOperation(operation: Operation) {
     def perform(valOpt: Option[String])(action: => Unit) { 
       action
-      persistence ! Persist(operation.key, valOpt, operation.id)
+      schedule(operation.id) {persistence ! Persist(operation.key, valOpt, operation.id)}
     }
     operation match {
       case Insert(k, v, id) => perform(Some(v)) { insert(k, v) } 
@@ -127,18 +127,20 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
         case Some(v) => perform { insert(key, v) } 
         case None    => perform { remove(key) }
       }
-      def retry = persistence ! Persist(key, valueOption, seq)
-      cancellables += seq -> context.system.scheduler.schedule(0 nanos, 100 milliseconds)(retry)       
-      expectd += 1
+      schedule(seq) {persistence ! Persist(key, valueOption, seq)}      
+      expectNext()
     }
   }
 
-  def operationAck(id: Long) = acknowledge(OperationAck(id))_
-  def acknowledge(msg: AnyRef)(perform: => Unit) {
-    perform
-    sender ! msg
-  }
   
+  def schedule(id: Long)(retry: => Unit) {
+    cancellables += id -> context.system.scheduler.schedule(0 nanos, 100 milliseconds)(retry)  
+  }    
+  def cancelRetry(id: Long) {
+    cancellables(id).cancel()
+    cancellables -= id
+  } 
+  def expectNext() = expectd += 1 
   override def postStop() = cancellables.values foreach { _.cancel() }
 }
 
