@@ -56,6 +56,11 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
    * Map from sequence number to cancellable tokens for Persist retry scheduled
    */
   var cancellables = Map.empty[Long, Cancellable]
+
+  /**
+   * Map from operation id to operation requesters
+   */
+  var requesters = Map.empty[Long, ActorRef]
   
   /**
    * A persistence actor to be supervised by this replica.
@@ -74,7 +79,16 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   }
 
   //TODO: solve step 5
-  val leader: Receive = { case operation: Operation => handleOperation(operation) }
+  val leader: Receive = { 
+    case operation: Operation => {
+      requesters += operation.id -> sender
+      handleOperation(operation) 
+    }
+    case Persisted(key, id) => {
+      requesters(id) ! OperationAck(id)
+      requesters -= id
+    }
+  }
 
   val replica: Receive = {
     case Get(k, id)               => sender ! GetResult(k, kv.get(k), id)
@@ -93,10 +107,13 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   val remove = (key: String) =>  kv -= key
   
   def handleOperation(operation: Operation) {
-    val perform =  operationAck(operation.id)
+    def perform(valOpt: Option[String])(action: => Unit) { 
+      action
+      persistence ! Persist(operation.key, valOpt, operation.id)
+    }
     operation match {
-      case Insert(k, v, id) => perform { insert(k, v) } 
-      case Remove(k, id)    => perform { remove(k) }
+      case Insert(k, v, id) => perform(Some(v)) { insert(k, v) } 
+      case Remove(k, id)    => perform(None) { remove(k) }
       case Get(k, id)       => sender ! GetResult(k, kv.get(k), id)
     }
   }  
