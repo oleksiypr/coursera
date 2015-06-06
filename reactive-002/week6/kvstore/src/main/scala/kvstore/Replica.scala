@@ -96,7 +96,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     }
     case Replicated(_, id) => {
       updatePending(id, sender)
-      if (!cancellables.contains(id) && noPendindsFor(id)) {
+      if (!(cancellables contains id) && noPendindsFor(id)) {
         acknowledgeOperation(id)
       }
     }
@@ -140,7 +140,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     }
     def timeOut(max: FiniteDuration) = {
       context.system.scheduler.scheduleOnce(1 second) {
-        if (requesters.contains(operation.id)) requesters(operation.id) ! OperationFailed(operation.id)
+        if (requesters contains operation.id) requesters(operation.id) ! OperationFailed(operation.id)
       }
     }
   }
@@ -204,15 +204,15 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   def replicas(perform: ActorRef => Unit, update: Set[ActorRef]) = update foreach perform
   def replicatorFor(secondary: ActorRef) = context.actorOf(Replicator.props(secondary))  
   def updatePending(id: Long, replicator: ActorRef) {
-    if (pendings.contains(id)) pendings += id -> (pendings(id) - replicator)
-    if (pendings.contains(id) && pendings(id).isEmpty) pendings -= id
+    if (pendings contains id) pendings += id -> (pendings(id) - replicator)
+    if ((pendings contains id) && pendings(id).isEmpty) pendings -= id
   }
-  def noPendindsFor(id: Long) = !pendings.contains(id) || pendings(id).isEmpty
+  def noPendindsFor(id: Long) = !(pendings contains id) || pendings(id).isEmpty
   def schedule(id: Long)(retry: => Unit) {
     cancellables += id -> context.system.scheduler.schedule(0 nanos, 100 milliseconds)(retry)  
   }
   def cancelRetry(id: Long) {
-    if (cancellables.contains(id)) cancellables(id).cancel()
+    if (cancellables contains id) cancellables(id).cancel()
     cancellables -= id
   } 
   def expectNext() = expectd += 1 
