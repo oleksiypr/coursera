@@ -54,9 +54,9 @@ class Replicator(val replica: ActorRef) extends Actor {
       def retry = replica ! Snapshot(k, valOpt, seq) 
       cancellables += seq -> context.system.scheduler.schedule(0 nanos, 100 milliseconds)(retry)      
     }
-    case SnapshotAck(key, seq) => {
+    case SnapshotAck(key, seq) if (acks.contains(seq)) => {
       val (requester, request) = acks(seq)
-      cancellables(seq).cancel()
+      if (cancellables.contains(seq)) cancellables(seq).cancel()
       acks -= seq
       cancellables -= seq      
       requester ! Replicated(key, request.id)

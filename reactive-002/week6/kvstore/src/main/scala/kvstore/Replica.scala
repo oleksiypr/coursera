@@ -1,10 +1,10 @@
 package kvstore
 
-import akka.actor.{ OneForOneStrategy, Props, ActorRef, Actor }
+import akka.actor.{ OneForOneStrategy, Props, ActorRef, Actor, ActorKilledException }
 import kvstore.Arbiter._
 import scala.collection.immutable.Queue
 import scala.language.postfixOps
-import akka.actor.SupervisorStrategy.Restart
+import akka.actor.SupervisorStrategy._
 import scala.annotation.tailrec
 import akka.pattern.{ ask, pipe }
 import akka.actor.Terminated
@@ -28,6 +28,11 @@ object Replica {
   case class OperationAck(id: Long) extends OperationReply
   case class OperationFailed(id: Long) extends OperationReply
   case class GetResult(key: String, valueOption: Option[String], id: Long) extends OperationReply
+  
+  sealed trait ClusterAction
+  case object JoinToCluster extends ClusterAction
+  case object LeaveTheCluster extends ClusterAction
+  case object Unchanged extends ClusterAction
 
   def props(arbiter: ActorRef, persistenceProps: Props): Props = Props(new Replica(arbiter, persistenceProps))
 }
@@ -48,11 +53,6 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   var secondaries = Map.empty[ActorRef, ActorRef]
   
   /**
-   * The current set of replicators.
-   */
-  var replicators = Set.empty[ActorRef]
-  
-  /**
    * Map from sequence number to cancellable tokens for Persist retry scheduled
    */
   var cancellables = Map.empty[Long, Cancellable]
@@ -70,12 +70,14 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   /**
    * A persistence actor to be supervised by this replica.
    */
-  val persistence = context.watch(context.actorOf(persistenceProps, "persistence"))
+  val persistence = context.actorOf(persistenceProps, "persistence")
   
   var expectd = 0L;
 
-  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 5) {
+  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 10) {
     case _: PersistenceException => Restart
+    case _: ActorKilledException => Stop
+    case _                       => Restart
   }
   
   def receive = {
@@ -83,7 +85,6 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     case JoinedSecondary => context become replica 
   }
 
-  //TODO Step 6.2
   val leader: Receive = {
     case operation: Operation => {
       requesters += operation.id -> sender
@@ -94,26 +95,15 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
       if (noPendindsFor(id)) acknowledgeOperation(id)
     }
     case Replicated(_, id) => {
-      updatePending(id)
+      updatePending(id, sender)
       if (!cancellables.contains(id) && noPendindsFor(id)) {
         acknowledgeOperation(id)
       }
     }
-    case Replicas(relicas) => {
-      val joined = (relicas - self) -- secondaries.keys.toSet
-      joined foreach { secondary =>
-        val replicator = replicatorFor(secondary)
-        kv foreach forward
-        secondaries += secondary -> replicator
-
-        def forward(kv: (String, String)) = {
-          val (k, v) = kv
-          val id = expectd
-          requesters += id -> self
-          replicator ! Replicate(k, Some(v), id)
-          expectNext()
-        }
-      }
+    case Replicas(rs) => {
+      val action = if (secondaries.size < rs.size - 1) JoinToCluster else 
+                   if (secondaries.size > rs.size - 1) LeaveTheCluster else Unchanged
+      handleReplicas(rs, action)
     }
     case OperationAck(id) => requesters -= id
   }
@@ -153,7 +143,21 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
         if (requesters.contains(operation.id)) requesters(operation.id) ! OperationFailed(operation.id)
       }
     }
-  }  
+  }
+
+  def handleReplicas(rs: Set[ActorRef], action: ClusterAction) {
+    action match {
+      case JoinToCluster => {
+        val joined = (rs - self) -- secondaries.keySet
+        replicas(join, joined)
+      }
+      case LeaveTheCluster => {
+        val left = secondaries.keySet -- (rs - self)
+        replicas(leave, left)
+      }
+      case Unchanged =>
+    }
+  }
   
   def handleSnapshot(key: String, valueOption: Option[String], seq: Long) {
     if (seq > expectd) ()
@@ -169,22 +173,49 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   }
 
   def acknowledgeOperation(id: Long) {
-    requesters(id) ! OperationAck(id)
+    if (requesters.contains(id)) requesters(id) ! OperationAck(id)
     requesters -= id
   }
+
+  def join(replica: ActorRef) {
+    val replicator = replicatorFor(replica)
+    kv foreach forward
+    secondaries += replica -> replicator
+
+    def forward(kv: (String, String)) = {
+      val (k, v) = kv
+      val id = expectd
+      requesters += id -> self
+      replicator ! Replicate(k, Some(v), id)
+      expectNext()
+    }
+  }
+  def leave(replica: ActorRef) {
+    val replicator = secondaries(replica)
+    acknowledgePendings(replicator)
+    secondaries -= replica
+    context.stop(replicator)
+  }
+  def acknowledgePendings(replicator: ActorRef) = 
+    for (id <- pendings.keys) {
+      acknowledgeOperation(id)
+      updatePending(id, replicator)
+    }
+  def replicas(perform: ActorRef => Unit, update: Set[ActorRef]) = update foreach perform
   def replicatorFor(secondary: ActorRef) = context.actorOf(Replicator.props(secondary))  
-  def updatePending(id: Long) {
-    pendings += id -> (pendings(id) - sender)
-    if (pendings(id).isEmpty) pendings -= id
+  def updatePending(id: Long, replicator: ActorRef) {
+    if (pendings.contains(id)) pendings += id -> (pendings(id) - replicator)
+    if (pendings.contains(id) && pendings(id).isEmpty) pendings -= id
   }
   def noPendindsFor(id: Long) = !pendings.contains(id) || pendings(id).isEmpty
   def schedule(id: Long)(retry: => Unit) {
     cancellables += id -> context.system.scheduler.schedule(0 nanos, 100 milliseconds)(retry)  
   }
   def cancelRetry(id: Long) {
-    cancellables(id).cancel()
+    if (cancellables.contains(id)) cancellables(id).cancel()
     cancellables -= id
   } 
   def expectNext() = expectd += 1 
+  
   override def postStop() = cancellables.values foreach { _.cancel() }
 }
