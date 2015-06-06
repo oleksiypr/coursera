@@ -79,33 +79,43 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   }
   
   def receive = {
-    case JoinedPrimary   => context.become(leader)
-    case JoinedSecondary => context.become(replica)
+    case JoinedPrimary   => context become leader
+    case JoinedSecondary => context become replica 
   }
 
-  //TODO Step 6
-  val leader: Receive = { 
+  //TODO Step 6.2
+  val leader: Receive = {
     case operation: Operation => {
       requesters += operation.id -> sender
-      handleOperation(operation) 
+      handleOperation(operation)
     }
     case Persisted(key, id) => {
       cancelRetry(id)
-      if (noPendindsFor(id)) {
-        acknowledgeOperation(id)   
-      }      
-    }
-    case Replicas(relicas) => {
-      (relicas - self) foreach { secondary =>
-        secondaries += secondary -> replicator(secondary)
-      }
+      if (noPendindsFor(id)) acknowledgeOperation(id)
     }
     case Replicated(_, id) => {
       updatePending(id)
       if (!cancellables.contains(id) && noPendindsFor(id)) {
-        acknowledgeOperation(id) 
+        acknowledgeOperation(id)
       }
     }
+    case Replicas(relicas) => {
+      val joined = (relicas - self) -- secondaries.keys.toSet
+      joined foreach { secondary =>
+        val replicator = replicatorFor(secondary)
+        kv foreach forward
+        secondaries += secondary -> replicator
+
+        def forward(kv: (String, String)) = {
+          val (k, v) = kv
+          val id = expectd
+          requesters += id -> self
+          replicator ! Replicate(k, Some(v), id)
+          expectNext()
+        }
+      }
+    }
+    case OperationAck(id) => requesters -= id
   }
 
   val replica: Receive = {
@@ -162,7 +172,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     requesters(id) ! OperationAck(id)
     requesters -= id
   }
-  def replicator(secondary: ActorRef) = context.actorOf(Replicator.props(secondary))  
+  def replicatorFor(secondary: ActorRef) = context.actorOf(Replicator.props(secondary))  
   def updatePending(id: Long) {
     pendings += id -> (pendings(id) - sender)
     if (pendings(id).isEmpty) pendings -= id
