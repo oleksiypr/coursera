@@ -1,5 +1,6 @@
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import edu.princeton.cs.algs4.*;
 
 /**
  * A randomized queue is similar to a stack or queue, except that the item

@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 /*************************************************************************
  *  Compilation:  javac RectHV.java
  *  Execution:    java RectHV

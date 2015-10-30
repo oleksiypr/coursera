@@ -1,4 +1,5 @@
 import java.util.TreeSet;
+import edu.princeton.cs.algs4.*;
 
 /**
  * The data type that represents a set of points in the unit square. 

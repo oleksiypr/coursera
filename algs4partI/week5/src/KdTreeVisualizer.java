@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 /*************************************************************************
  *  Compilation:  javac KdTreeVisualizer.java
  *  Execution:    java KdTreeVisualizer

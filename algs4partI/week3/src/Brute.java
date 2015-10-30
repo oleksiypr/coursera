@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import edu.princeton.cs.algs4.*;
 
 /**
  * A program examines 4 points at a time and checks whether they all lie 

@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 public class PointSETVisualizer {
     public static void main(String[] args) {
         RectHV rect = new RectHV(0.0, 0.0, 1.0, 1.0);

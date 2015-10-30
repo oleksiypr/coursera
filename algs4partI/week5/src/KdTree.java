@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 /**
  * The data type that uses a 2d-tree to implement set of points in the unit square. 
  * A 2d-tree is a generalization of a BST to two-dimensional keys.

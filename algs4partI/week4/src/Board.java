@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 /**
  * Board is an immutable data type that represents N*N game board.
  * @author Oleksiy_Prosyanko

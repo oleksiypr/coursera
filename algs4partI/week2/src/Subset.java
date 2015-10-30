@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 /**
  * A client program Subset.java that takes a command-line integer k; 
  * reads in a sequence of N strings from standard input using StdIn.readString(); 

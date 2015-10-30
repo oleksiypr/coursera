@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 /*************************************************************************
  *  Compilation:  javac RangeSearchVisualizer.java
  *  Execution:    java RangeSearchVisualizer input.txt

@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 /**
  * Monte Carlo simulation to estimate the percolation threshold. Use to perform
  * a series of computational experiments.

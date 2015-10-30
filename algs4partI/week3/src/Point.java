@@ -12,10 +12,9 @@
 
 import java.util.Arrays;
 import java.util.Comparator;
+import edu.princeton.cs.algs4.*;
 
 public class Point implements Comparable<Point> {
-    public final Comparator<Point> SLOPE_ORDER = new SloperOrder();       
-
     private final int x;    
     private final int y;    
 
@@ -54,8 +53,8 @@ public class Point implements Comparable<Point> {
         int dy = that.y - this.y;
         
         if (dx == 0 && dy == 0) return Double.NEGATIVE_INFINITY;
-        if (dy == 0) return +0.0;
-        if (dx == 0) return Double.POSITIVE_INFINITY;
+        if (dy == 0)			return +0.0;
+        if (dx == 0)			return Double.POSITIVE_INFINITY;
         return ((double) dy)/ dx;
     }
 
@@ -72,6 +71,10 @@ public class Point implements Comparable<Point> {
             else return -1;
         }
         return +1;
+    }
+    
+    public Comparator<Point> slopeOrder() {
+    	return new SloperOrder();
     }
 
     public String toString() {
@@ -174,7 +177,7 @@ public class Point implements Comparable<Point> {
         ps[3] = new Point(1, 2);
         ps[4] = new Point(1, 0);
         StdRandom.shuffle(ps);         
-        Arrays.sort(ps, origin.SLOPE_ORDER);
+        Arrays.sort(ps, origin.slopeOrder());
         out(ps);   
         
     }
@@ -202,7 +205,7 @@ public class Point implements Comparable<Point> {
         
         StdRandom.shuffle(ps);  
         Arrays.sort(ps);
-        Arrays.sort(ps, origin.SLOPE_ORDER);
+        Arrays.sort(ps, origin.slopeOrder());
         out(ps);  
         
     }

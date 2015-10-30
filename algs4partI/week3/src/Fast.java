@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import edu.princeton.cs.algs4.*;
 
 
 /** A faster, sorting-based solution. Remarkably, it is possible to solve the problem much faster 
@@ -29,7 +30,7 @@ public class Fast {
         for (int k = 0; k < points.length; k++) { 
             Point origin = points[k];             
             Point[] rest = Arrays.copyOfRange(points, k, points.length);
-            Arrays.sort(rest, origin.SLOPE_ORDER);
+            Arrays.sort(rest, origin.slopeOrder());
             
             if (rest.length < MINIMUM_APPENED_POINTS + 2) continue;
             double slope = origin.slopeTo(rest[1]); 

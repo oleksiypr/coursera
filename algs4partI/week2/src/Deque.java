@@ -1,5 +1,6 @@
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import edu.princeton.cs.algs4.*;
 
 /**
  * Deque is a generalization of a stack and a queue that supports inserting and

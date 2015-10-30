@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 /****************************************************************************
  *  Compilation:  javac InteractivePercolationVisualizer.java
  *  Execution:    java InteractivePercolationVisualizer N

@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 /**
  * This class in designed to find a solution to the initial board (using the A* algorithm).
  * We define a search node of the game to be a board, the number of moves made to reach the board, and 

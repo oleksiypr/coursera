@@ -1,3 +1,5 @@
+import edu.princeton.cs.algs4.*;
+
 /**
  * Percolation implementation based on QuickFindUF.
  * 

@@ -1,5 +1,6 @@
 import org.junit.Assert;
 import org.junit.Test;
+import edu.princeton.cs.algs4.*;
 
 public class KdTreeTest {
     @Test
