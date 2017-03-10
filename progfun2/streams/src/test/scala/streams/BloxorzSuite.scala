@@ -64,6 +64,49 @@ class BloxorzSuite extends FunSuite {
     }
   }
 
+  test("neighborsWithHistory") {
+    new Level1 {
+      val neighbors = neighborsWithHistory(Block(Pos(1,1),Pos(1,1)), List(Left,Up))
+      assert(neighbors.take(2).toSet === Set(
+        (Block(Pos(1,2),Pos(1,3)), List(Right,Left,Up)),
+        (Block(Pos(2,1),Pos(3,1)), List(Down,Left,Up))
+      ))
+    }
+  }
+
+  test("newNeighborsOnly test 1") {
+    new Level1 {
+      val neighbors = Stream(
+        (Block(Pos(2, 2), Pos(3, 2)), List()),
+        (Block(Pos(1, 2), Pos(1, 2)), List(Up)),
+        (Block(Pos(2, 2), Pos(3, 2)), List(Down, Up)),
+        (Block(Pos(1, 2), Pos(1, 2)), List(Up, Down, Up)),
+        (Block(Pos(2, 2), Pos(3, 2)), List(Down, Up, Down, Up)),
+        (Block(Pos(1, 2), Pos(1, 2)), List(Up, Down, Up, Down, Up)),
+        (Block(Pos(2, 2), Pos(3, 2)), List(Down, Up, Down, Up, Down, Up))
+      )
+      val newOnly = newNeighborsOnly(neighbors, Set())
+      assert(newOnly === Stream(
+        (Block(Pos(2, 2), Pos(3, 2)), List()),
+        (Block(Pos(1, 2), Pos(1, 2)), List(Up)))
+      )
+    }
+  }
+
+  test("newNeighborsOnly test 2") {
+    new Level1 {
+      val newOnly = newNeighborsOnly(
+        Set(
+          (Block(Pos(1,2),Pos(1,3)), List(Right,Left,Up)),
+          (Block(Pos(2,1),Pos(3,1)), List(Down,Left,Up))
+        ).toStream,
+        Set(Block(Pos(1,2),Pos(1,3)), Block(Pos(1,1),Pos(1,1)))
+      )
+      assert(newOnly === Set(
+        (Block(Pos(2,1),Pos(3,1)), List(Down,Left,Up))
+      ).toStream)
+    }
+  }
 
 	test("optimal solution for level 1") {
     new Level1 {
