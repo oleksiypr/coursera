@@ -1,7 +1,5 @@
 package streams
 
-import common._
-
 /**
  * This component implements a parser to define terrains from a
  * graphical ASCII representation.
@@ -71,7 +69,7 @@ trait StringParserTerrain extends GameDef {
    * `Vector` class
    */
   def findChar(c: Char, levelVector: Vector[Vector[Char]]): Pos = {
-    def containsChar(v: Vector[Char]): Boolean = v.indexOf(c) > 0
+    def containsChar(v: Vector[Char]): Boolean = v.indexOf(c) >= 0
     val row = levelVector.indexWhere(containsChar)
     Pos(row, levelVector(row).indexOf(c))
   }
@@ -82,5 +80,4 @@ trait StringParserTerrain extends GameDef {
   lazy val terrain: Terrain = terrainFunction(vector)
   lazy val startPos: Pos = findChar('S', vector)
   lazy val goal: Pos = findChar('T', vector)
-
 }
