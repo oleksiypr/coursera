@@ -74,26 +74,7 @@ class BloxorzSuite extends FunSuite {
     }
   }
 
-  test("newNeighborsOnly test 1") {
-    new Level1 {
-      val neighbors = Stream(
-        (Block(Pos(2, 2), Pos(3, 2)), List()),
-        (Block(Pos(1, 2), Pos(1, 2)), List(Up)),
-        (Block(Pos(2, 2), Pos(3, 2)), List(Down, Up)),
-        (Block(Pos(1, 2), Pos(1, 2)), List(Up, Down, Up)),
-        (Block(Pos(2, 2), Pos(3, 2)), List(Down, Up, Down, Up)),
-        (Block(Pos(1, 2), Pos(1, 2)), List(Up, Down, Up, Down, Up)),
-        (Block(Pos(2, 2), Pos(3, 2)), List(Down, Up, Down, Up, Down, Up))
-      )
-      val newOnly = newNeighborsOnly(neighbors, Set())
-      assert(newOnly === Stream(
-        (Block(Pos(2, 2), Pos(3, 2)), List()),
-        (Block(Pos(1, 2), Pos(1, 2)), List(Up)))
-      )
-    }
-  }
-
-  test("newNeighborsOnly test 2") {
+  test("newNeighborsOnly") {
     new Level1 {
       val newOnly = newNeighborsOnly(
         Set(
