@@ -9,13 +9,12 @@ import Prop._
 
 abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
 
-  lazy val genHeap: Gen[H] = oneOf(
-    const(empty),
+  lazy val genHeap: Gen[H] =
     for {
       x <- arbitrary[Int]
       h <- oneOf(const(empty), genHeap)
     } yield insert(x, h)
-  )
+
   implicit lazy val arbHeap: Arbitrary[H] = Arbitrary(genHeap)
 
   property("gen1") = forAll { (h: H) =>
@@ -40,11 +39,28 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
     }
   }
 
-  property("sorted sequense") = forAll {
+  property("sorted sequence") = forAll {
     h: H => {
       val list = toList(h)
       list == list.sorted
     }
+  }
+
+  property("minimum of meld") = forAll {
+    (h1: H, h2: H) => {
+      val melded = meld(h1, h2)
+      val m = findMin(melded)
+      val m1 = findMin(h1)
+      val m2 = findMin(h2)
+      m == m1 || m == m2
+    }
+  }
+
+  property("meld min move") = forAll { (h1: H, h2: H) =>
+    val min1 = findMin(h1)
+    val xs1 = toList(meld(deleteMin(h1), insert(min1, h2)))
+    val xs2 = toList(meld(h1, h2))
+    xs1 == xs2
   }
 
   private def toList(h: H): List[Int] =
