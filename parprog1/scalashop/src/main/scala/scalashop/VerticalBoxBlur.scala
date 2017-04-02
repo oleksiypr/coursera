@@ -61,7 +61,7 @@ object VerticalBoxBlur {
    *  columns.
    */
   def parBlur(src: Img, dst: Img, numTasks: Int, radius: Int): Unit = {
-    val dx = src.width / numTasks
+    val dx = math.max(src.width/numTasks, 1)
     val range = 0 to src.width by dx
     val tasks = (range zip range.tail) map {
       case (from, end) => task {
