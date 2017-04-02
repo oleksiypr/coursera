@@ -28,7 +28,7 @@ class BlurSuite extends FunSuite {
 
   test("boxBlurKernel should return the correct value on an interior pixel " +
     "of a 3x4 image with radius 1") {
-    val src = new Img(3, 4)
+    val src = new Img(w = 3, h = 4)
     src(0, 0) = 0; src(1, 0) = 1; src(2, 0) = 2
     src(0, 1) = 3; src(1, 1) = 4; src(2, 1) = 5
     src(0, 2) = 6; src(1, 2) = 7; src(2, 2) = 8
@@ -37,6 +37,11 @@ class BlurSuite extends FunSuite {
     assert(boxBlurKernel(src, 1, 2, 1) === 12,
       s"(boxBlurKernel(1, 2, 1) should be 12, " +
         s"but it's ${boxBlurKernel(src, 1, 2, 1)})")
+
+    assert(boxBlurKernel(src, x = 0, y = 0, radius = 1) == 2)
+    assert(boxBlurKernel(src, x = 2, y = 0, radius = 1) == 3)
+    assert(boxBlurKernel(src, x = 0, y = 3, radius = 1) == 18)
+    assert(boxBlurKernel(src, x = 2, y = 3, radius = 1) == 10)
   }
 
   test("HorizontalBoxBlur.blur with radius 1 should correctly blur the entire 3x3 image") {
