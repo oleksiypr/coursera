@@ -9,6 +9,12 @@ import common._
 
 @RunWith(classOf[JUnitRunner])
 class BlurSuite extends FunSuite {
+  test("boxBlurKernel should correctly handle radius 0 for 1*1 image") {
+    val src = new Img(1, 1)
+    src(0, 0) = rgba(0, 0, 0, 0)
+    assert(boxBlurKernel(src, x = 0, y = 0, radius = 0) === rgba(0, 0, 0, 0))
+  }
+
   test("boxBlurKernel should correctly handle radius 0") {
     val src = new Img(5, 5)
 
@@ -88,6 +94,4 @@ class BlurSuite extends FunSuite {
     check(2, 2, 5)
     check(3, 2, 6)
   }
-
-
 }
