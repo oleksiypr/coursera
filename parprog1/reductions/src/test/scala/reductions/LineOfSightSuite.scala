@@ -23,7 +23,6 @@ class LineOfSightSuite extends FunSuite {
     assert(res == 4f)
   }
 
-
   test("downsweepSequential should correctly handle a 4 element array when the starting angle is zero") {
     val output = new Array[Float](4)
     downsweepSequential(Array[Float](0f, 1f, 8f, 9f), output, 0f, 1, 4)
