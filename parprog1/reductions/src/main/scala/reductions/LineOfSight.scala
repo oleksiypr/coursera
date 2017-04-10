@@ -76,9 +76,17 @@ object LineOfSight {
    *  If the specified part of the array is longer than `threshold`, then the
    *  work is divided and done recursively in parallel.
    */
-  def upsweep(input: Array[Float], from: Int, end: Int,
-    threshold: Int): Tree = {
-    ???
+  def upsweep(input: Array[Float], from: Int, end: Int, threshold: Int): Tree = {
+    if (end - from <= threshold) {
+      Leaf(from, end, upsweepSequential(input, from, end))
+    } else {
+      val m = (end + from)/2
+      val (left, right) = parallel(
+        upsweep(input, from, m, threshold),
+        upsweep(input, m, end, threshold)
+      )
+      Node(left, right)
+    }
   }
 
   /** Traverses the part of the `input` array starting at `from` and until
@@ -87,7 +95,16 @@ object LineOfSight {
    */
   def downsweepSequential(input: Array[Float], output: Array[Float],
     startingAngle: Float, from: Int, until: Int): Unit = {
-    ???
+    var i = from
+    while (i < until) {
+      output(i) = if (i == 0) startingAngle
+        else if (i == from) math.max(startingAngle, input(i)/i)
+        else {
+          val angle = input(i) / i
+          if (angle > output(i - 1)) angle else output(i - 1)
+        }
+      i += 1
+    }
   }
 
   /** Pushes the maximum angle in the prefix of the array to each leaf of the
@@ -95,13 +112,20 @@ object LineOfSight {
    *  the `output` angles.
    */
   def downsweep(input: Array[Float], output: Array[Float], startingAngle: Float,
-    tree: Tree): Unit = {
-    ???
+    tree: Tree): Unit = tree match {
+    case Leaf(from, until, _) => downsweepSequential(input, output, startingAngle, from, until)
+    case Node(left, right) =>
+      parallel(
+        downsweep(input, output, startingAngle, left),
+        downsweep(input, output, math.max(startingAngle, left.maxPrevious), right)
+      )
   }
 
   /** Compute the line-of-sight in parallel. */
   def parLineOfSight(input: Array[Float], output: Array[Float],
     threshold: Int): Unit = {
-    ???
+    val tree = upsweep(input, from = 1, end = input.length, threshold)
+    downsweep(input, output, startingAngle = 0.0f, tree)
+    output(0) = 0.0f
   }
 }
