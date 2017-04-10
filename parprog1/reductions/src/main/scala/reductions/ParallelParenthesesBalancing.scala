@@ -54,15 +54,37 @@ object ParallelParenthesesBalancing {
    */
   def parBalance(chars: Array[Char], threshold: Int): Boolean = {
 
-    def traverse(idx: Int, until: Int, arg1: Int, arg2: Int) /*: ???*/ = {
-      ???
+    /**
+      * @param notBalancedOpen count of non balanced '('
+      * @param notBalancedClose count of non balanced ')'
+      * @return tuple of non balanced '(' and ')'
+      */
+    @tailrec
+    def traverse(from: Int, until: Int, notBalancedOpen: Int, notBalancedClose: Int) : (Int, Int) = {
+      if (from >= until) (notBalancedOpen, notBalancedClose) else
+      if (chars(from) == '(') traverse(from + 1, until, notBalancedOpen + 1, notBalancedClose) else
+      if (chars(from) == ')') {
+        if (notBalancedOpen > 0) traverse(from + 1, until, notBalancedOpen - 1, notBalancedClose)
+        else traverse(from + 1, until, notBalancedOpen, notBalancedClose + 1)
+      } else traverse(from + 1, until, notBalancedOpen, notBalancedClose)
     }
 
-    def reduce(from: Int, until: Int) /*: ???*/ = {
-      ???
+    def reduce(from: Int, until: Int) : (Int, Int) = {
+      if (until - from <= threshold) traverse(from, until, 0, 0)
+      else {
+        val m = from + (until - from)/2
+        val ((a1, b1), (a2, b2)) = parallel(
+          reduce(from, m),
+          reduce(m, until)
+        )
+
+        val x = a2 + (if (a1 >= b2) a1 - b2 else 0)
+        val y = b1 + (if (b2 >= a1) b1 - a2 else 0)
+        (x, y)
+      }
     }
 
-    reduce(0, chars.length) == ???
+    reduce(0, chars.length) == (0, 0)
   }
 
   // For those who want more:
