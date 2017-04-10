@@ -79,7 +79,7 @@ object ParallelParenthesesBalancing {
         )
 
         val x = a2 + (if (a1 >= b2) a1 - b2 else 0)
-        val y = b1 + (if (b2 >= a1) b1 - a2 else 0)
+        val y = b1 + (if (b2 >= a1) b2 - a1 else 0)
         (x, y)
       }
     }
