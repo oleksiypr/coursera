@@ -97,12 +97,11 @@ object LineOfSight {
     startingAngle: Float, from: Int, until: Int): Unit = {
     var i = from
     while (i < until) {
-      output(i) = if (i == 0) startingAngle
-        else if (i == from) math.max(startingAngle, input(i)/i)
-        else {
-          val angle = input(i) / i
-          if (angle > output(i - 1)) angle else output(i - 1)
-        }
+      output(i) =  if (i == 0) startingAngle else {
+        val angle = input(i) / i
+        if (i == from) math.max(startingAngle, angle)
+        else if (angle > output(i - 1)) angle else output(i - 1)
+      }
       i += 1
     }
   }
