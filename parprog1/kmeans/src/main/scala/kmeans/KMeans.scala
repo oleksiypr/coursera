@@ -43,7 +43,8 @@ class KMeans {
   }
 
   def classify(points: GenSeq[Point], means: GenSeq[Point]): GenMap[Point, GenSeq[Point]] = {
-    ???
+    val grouped = points.groupBy(p => findClosest(p, means))
+    means.map(m => m -> grouped.getOrElse(m, GenSeq.empty)).toMap
   }
 
   def findAverage(oldMean: Point, points: GenSeq[Point]): Point = if (points.length == 0) oldMean else {
