@@ -81,7 +81,7 @@ class KMeans {
         newMeans,
         eta
       )
-    else means
+    else newMeans
   }
 }
 

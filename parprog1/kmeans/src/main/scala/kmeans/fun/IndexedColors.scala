@@ -33,7 +33,7 @@ class IndexedColorFilter(initialImage: Img,
   def getResult() = indexedImage(initialImage, newMeans)
 
   private def imageToPoints(img: Img): GenSeq[Point] =
-    for (x <- 0 until img.width; y <- 0 until img.height) yield {
+    for (x <- (0 until img.width).par; y <- (0 until img.height).par) yield {
       val rgba = img(x, y)
       new Point(red(rgba), green(rgba), blue(rgba))
     }
