@@ -79,7 +79,7 @@ package object barneshut {
         if (b.y < centerY) Fork(nw.insert(b), ne, sw, se)
         else  Fork(nw, ne, sw.insert(b), se)
       else
-        if (b.y < centerY)  Fork(nw, ne.insert(b), sw, se)
+        if (b.y < centerY) Fork(nw, ne.insert(b), sw, se)
         else  Fork(nw, ne, sw, se.insert(b))
     }
   }
@@ -153,13 +153,14 @@ package object barneshut {
       }
 
       def traverse(quad: Quad): Unit = (quad: Quad) match {
-        case Empty(_, _, _) =>
-          // no force
-        case Leaf(_, _, _, bodies) =>
-          // add force contribution of each body by calling addForce
+        case Empty(_, _, _) => ()
+        case Leaf(_, _, _, bodies) => bodies.foreach(b => addForce(b.mass, b.x, b.y))
+        case Fork(_, _, _, _) if farAwayFrom(quad) => addForce(quad.mass, quad.massX, quad.massY)
         case Fork(nw, ne, sw, se) =>
-          // see if node is far enough from the body,
-          // or recursion is needed
+          traverse(nw)
+          traverse(ne)
+          traverse(sw)
+          traverse(se)
       }
 
       traverse(quad)
@@ -172,6 +173,7 @@ package object barneshut {
       new Body(mass, nx, ny, nxspeed, nyspeed)
     }
 
+    private def farAwayFrom(q: Quad): Boolean = q.size / distance(x, y, q.centerY, q.centerY) < theta
   }
 
   val SECTOR_PRECISION = 8
