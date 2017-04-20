@@ -44,11 +44,16 @@ package object barneshut {
   }
 
   case class Empty(centerX: Float, centerY: Float, size: Float) extends Quad {
-    def massX: Float = ???
-    def massY: Float = ???
-    def mass: Float = ???
-    def total: Int = ???
-    def insert(b: Body): Quad = ???
+    def massX: Float = centerX
+    def massY: Float = centerY
+    def mass: Float = 0.0f
+    def total: Int = 0
+    def insert(b: Body): Quad = Leaf(
+      centerX = b.x,
+      centerY = b.y,
+      size = this.size,
+      bodies = Seq(b)
+    )
   }
 
   case class Fork(
