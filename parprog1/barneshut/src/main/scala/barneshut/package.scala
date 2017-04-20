@@ -96,6 +96,7 @@ package object barneshut {
     def insert(b: Body): Quad = if (size <= minimumSize) Leaf(centerX, centerY, size, bodies :+ b) else {
       val quadSize: Float = size / 2
       val dx, dy = quadSize / 2
+
       val nw: Quad = Empty(centerX - dx, centerY - dy, quadSize)
       val ne: Quad = Empty(centerX + dx, centerY - dy, quadSize)
       val sw: Quad = Empty(centerX - dx, centerY + dy, quadSize)
@@ -184,14 +185,26 @@ package object barneshut {
     for (i <- 0 until matrix.length) matrix(i) = new ConcBuffer
 
     def +=(b: Body): SectorMatrix = {
-      ???
+      val x: Int = 
+        if (b.x < boundaries.minX) 0 else 
+        if (b.x > boundaries.maxX) sectorPrecision - 1
+        else ((b.x - boundaries.minX) / sectorSize).toInt
+      
+      val y: Int =
+        if (b.y < boundaries.minY) 0 else
+        if (b.y > boundaries.maxY) sectorPrecision - 1
+        else ((b.y - boundaries.minY) / sectorSize).toInt
+
+      this(x, y) += b
       this
     }
 
-    def apply(x: Int, y: Int) = matrix(y * sectorPrecision + x)
+    def apply(x: Int, y: Int): ConcBuffer[Body] = matrix(y * sectorPrecision + x)
 
     def combine(that: SectorMatrix): SectorMatrix = {
-      ???
+      for (i <- matrix.indices) matrix(i) = this.matrix(i) combine that.matrix(i)
+      that.matrix.foreach(_.clear())
+      this
     }
 
     def toQuad(parallelism: Int): Quad = {
