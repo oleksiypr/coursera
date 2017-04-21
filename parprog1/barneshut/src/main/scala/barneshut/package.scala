@@ -187,12 +187,12 @@ package object barneshut {
     def +=(b: Body): SectorMatrix = {
       val x: Int = 
         if (b.x < boundaries.minX) 0 else 
-        if (b.x > boundaries.maxX) sectorPrecision - 1
+        if (b.x >= boundaries.maxX) sectorPrecision - 1
         else ((b.x - boundaries.minX) / sectorSize).toInt
       
       val y: Int =
         if (b.y < boundaries.minY) 0 else
-        if (b.y > boundaries.maxY) sectorPrecision - 1
+        if (b.y >= boundaries.maxY) sectorPrecision - 1
         else ((b.y - boundaries.minY) / sectorSize).toInt
 
       this(x, y) += b
