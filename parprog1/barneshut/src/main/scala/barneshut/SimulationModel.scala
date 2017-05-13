@@ -36,7 +36,7 @@ class SimulationModel {
 
     def galaxy(from: Int, num: Int, maxradius: Float, cx: Float, cy: Float, sx: Float, sy: Float) {
       val totalM = 1.5f * num
-      val blackHoleM = 1000.0f * num
+      val blackHoleM = 1.0f * num
       val cubmaxradius = maxradius * maxradius * maxradius
       for (i <- from until (from + num)) {
         val b = if (i == from) {
