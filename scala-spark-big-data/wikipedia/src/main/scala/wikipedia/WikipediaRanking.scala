@@ -70,14 +70,14 @@ object WikipediaRanking {
     langs: List[String],
     rdd: RDD[WikipediaArticle]
   ): RDD[(String, Iterable[WikipediaArticle])] = {
-    rdd flatMap {
-      article => langs withFilter {
-        article.mentionsLanguage
-      } map {
-        lang => (lang, article)
-      }
-    } groupByKey
-  }
+    for {
+      article <- rdd
+      lang <- langs
+      if article.mentionsLanguage(lang)
+    } yield {
+      (lang, article)
+    }
+  } groupByKey
 
   /* (2) Compute the language ranking again, but now using the inverted index. Can you notice
    *     a performance improvement?
