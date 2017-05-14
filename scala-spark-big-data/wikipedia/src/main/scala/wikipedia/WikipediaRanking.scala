@@ -55,7 +55,7 @@ object WikipediaRanking {
     langs: List[String],
     rdd: RDD[WikipediaArticle]
   ): List[(String, Int)] = {
-
+    rdd.cache()
     langs map {
       lang => (lang, occurrencesOfLang(lang, rdd))
     } sortBy(- _._2)
@@ -75,7 +75,7 @@ object WikipediaRanking {
     } yield {
       (lang, article)
     }
-  } groupByKey
+  }.groupByKey
 
   /* (2) Compute the language ranking again, but now using the inverted index. Can you notice
    *     a performance improvement?
@@ -96,7 +96,12 @@ object WikipediaRanking {
    *   Note: this operation is long-running. It can potentially run for
    *   several seconds.
    */
-  def rankLangsReduceByKey(langs: List[String], rdd: RDD[WikipediaArticle]): List[(String, Int)] = ???
+  def rankLangsReduceByKey(
+    langs: List[String],
+    rdd: RDD[WikipediaArticle]
+  ): List[(String, Int)] = {
+    ???
+  }
 
   def main(args: Array[String]) {
 
