@@ -5,8 +5,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
 
-import scala.language.postfixOps
-
 case class WikipediaArticle(title: String, text: String) {
   /**
     * @return Whether the text of this article mentions `lang` or not
@@ -60,7 +58,7 @@ object WikipediaRanking {
 
     langs map {
       lang => (lang, occurrencesOfLang(lang, rdd))
-    } sortBy(_._2) reverse
+    } sortBy(- _._2)
   }
 
   /* Compute an inverted index of the set of articles, mapping each language
