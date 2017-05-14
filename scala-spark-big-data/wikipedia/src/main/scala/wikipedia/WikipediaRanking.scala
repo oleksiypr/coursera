@@ -34,7 +34,11 @@ object WikipediaRanking {
    *  Hint1: consider using method `aggregate` on RDD[T].
    *  Hint2: consider using method `mentionsLanguage` on `WikipediaArticle`
    */
-  def occurrencesOfLang(lang: String, rdd: RDD[WikipediaArticle]): Int = {
+  def occurrencesOfLang(
+     lang: String,
+     rdd: RDD[WikipediaArticle]
+  ): Int = {
+
     def countArticle(count: Int, art: WikipediaArticle) =
       if (art.mentionsLanguage(lang)) count + 1 else count
 
@@ -49,7 +53,11 @@ object WikipediaRanking {
    *   Note: this operation is long-running. It can potentially run for
    *   several seconds.
    */
-  def rankLangs(langs: List[String], rdd: RDD[WikipediaArticle]): List[(String, Int)] = {
+  def rankLangs(
+    langs: List[String],
+    rdd: RDD[WikipediaArticle]
+  ): List[(String, Int)] = {
+
     langs map {
       lang => (lang, occurrencesOfLang(lang, rdd))
     } sortBy(_._2) reverse
@@ -58,7 +66,18 @@ object WikipediaRanking {
   /* Compute an inverted index of the set of articles, mapping each language
    * to the Wikipedia pages in which it occurs.
    */
-  def makeIndex(langs: List[String], rdd: RDD[WikipediaArticle]): RDD[(String, Iterable[WikipediaArticle])] = ???
+  def makeIndex(
+    langs: List[String],
+    rdd: RDD[WikipediaArticle]
+  ): RDD[(String, Iterable[WikipediaArticle])] = {
+    rdd flatMap {
+      article => langs withFilter {
+        article.mentionsLanguage
+      } map {
+        lang => (lang, article)
+      }
+    } groupByKey
+  }
 
   /* (2) Compute the language ranking again, but now using the inverted index. Can you notice
    *     a performance improvement?
