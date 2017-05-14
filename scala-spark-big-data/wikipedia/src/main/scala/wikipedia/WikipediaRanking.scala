@@ -100,8 +100,14 @@ object WikipediaRanking {
     langs: List[String],
     rdd: RDD[WikipediaArticle]
   ): List[(String, Int)] = {
-    ???
-  }
+    for {
+      article <- rdd
+      lang <- langs
+      if article.mentionsLanguage(lang)
+    } yield {
+      (lang, 1)
+    }
+  }.reduceByKey(_ + _).sortBy(- _._2).collect().toList
 
   def main(args: Array[String]) {
 
