@@ -113,7 +113,7 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
       tags = None
     )
 
-    val rdd: RDD[(Int, Iterable[(Posting, Posting)])] =
+    val grouped: RDD[(Int, Iterable[(Posting, Posting)])] =
       sc.parallelize(List(
         (question.id, List(
           (question, answer1),
@@ -122,8 +122,27 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
       )
 
     import testObject.scoredPostings
-    val res = scoredPostings(rdd).collect()
+    val res = scoredPostings(grouped).collect()
     assert(res.length == 1)
     assert(res(0) == (question, 4))
+  }
+
+  test("vectorPostings") {
+    val posting = Posting(
+      postingType = Question,
+      id = 0,
+      acceptedAnswer = None,
+      parentId = None,
+      score = 2,
+      tags = Some("Java")
+    )
+    val scored = sc.parallelize(List((posting, 4)))
+
+    import testObject.vectorPostings
+    import testObject.langSpread
+
+    val res = vectorPostings(scored).collect()
+    assert(res.length == 1)
+    assert(res(0) == (langSpread, 4))
   }
 }
