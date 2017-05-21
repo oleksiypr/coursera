@@ -206,17 +206,32 @@ class StackOverflow extends Serializable {
   //
 
   /** Main kmeans computation */
-  @tailrec final def kmeans(means: Array[(Int, Int)], vectors: RDD[(Int, Int)], iter: Int = 1, debug: Boolean = false): Array[(Int, Int)] = {
+  @tailrec final def kmeans(
+      means: Array[(Int, Int)],
+      vectors: RDD[(Int, Int)],
+      iter: Int = 1,
+      debug: Boolean = false
+    ): Array[(Int, Int)] = {
+
     val newMeans = means.clone() // you need to compute newMeans
 
-    // TODO: Fill in the newMeans array
+    vectors map {
+      v => (findClosest(v, means), v)
+    } groupByKey() mapValues {
+      vs => averageVectors(vs)
+    } collect() foreach {
+      case (k, av) => newMeans(k) = av
+    }
+
     val distance = euclideanDistance(means, newMeans)
 
     if (debug) {
-      println(s"""Iteration: $iter
-                 |  * current distance: $distance
-                 |  * desired distance: $kmeansEta
-                 |  * means:""".stripMargin)
+      println(
+        s"""Iteration: $iter
+           |  * current distance: $distance
+           |  * desired distance: $kmeansEta
+           |  * means:""".stripMargin)
+
       for (idx <- 0 until kmeansKernels)
       println(f"   ${means(idx).toString}%20s ==> ${newMeans(idx).toString}%20s  " +
               f"  distance: ${euclideanDistance(means(idx), newMeans(idx))}%8.0f")
@@ -242,8 +257,7 @@ class StackOverflow extends Serializable {
   //
 
   /** Decide whether the kmeans clustering converged */
-  def converged(distance: Double) =
-    distance < kmeansEta
+  def converged(distance: Double): Boolean = distance < kmeansEta
 
 
   /** Return the euclidean distance between two points */
