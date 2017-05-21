@@ -13,8 +13,8 @@ case class Posting(
     id: Int,
     acceptedAnswer: Option[Int],
     parentId: Option[Int],
-    score: Int, tags:
-    Option[String]
+    score: Int,
+    tags: Option[String]
   ) extends Serializable
 
 
@@ -108,7 +108,9 @@ class StackOverflow extends Serializable {
 
 
   /** Compute the maximum score for each posting */
-  def scoredPostings(grouped: RDD[(Int, Iterable[(Posting, Posting)])]): RDD[(Posting, Int)] = {
+  def scoredPostings(
+      grouped: RDD[(Int, Iterable[(Posting, Posting)])]
+    ): RDD[(Posting, Int)] = {
 
     def answerHighScore(as: Array[Posting]): Int = {
       var highScore = 0
@@ -121,7 +123,11 @@ class StackOverflow extends Serializable {
       highScore
     }
 
-    ???
+    for {
+      (_, qas) <- grouped
+      question = qas.head._1
+      answers = qas.map(_._2).toArray
+    } yield (question, answerHighScore(answers))
   }
 
 

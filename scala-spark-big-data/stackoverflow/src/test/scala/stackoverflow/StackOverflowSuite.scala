@@ -87,23 +87,43 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
     assert(res2(0)._2.head == (question, answer))
   }
 
+  test("scoredPostings") {
+    val question = Posting(
+      postingType = Question,
+      id = 0,
+      acceptedAnswer = None,
+      parentId = None,
+      score = 2,
+      tags = None
+    )
+    val answer1 = Posting(
+      postingType = Answer,
+      id = 1,
+      acceptedAnswer = None,
+      parentId = Some(0),
+      score = 3,
+      tags = None
+    )
+    val answer2 = Posting(
+      postingType = Answer,
+      id = 2,
+      acceptedAnswer = None,
+      parentId = Some(0),
+      score = 4,
+      tags = None
+    )
 
-  /**
-    test("'rankLangsUsingIndex' should work for a simple RDD with three elements") {
-      assert(initializeWikipediaRanking(), " -- did you fill in all the values in WikipediaRanking (conf, sc, wikiRdd)?")
-      import WikipediaRanking._
-      val langs = List("Scala", "Java")
-      val articles = List(
-          WikipediaArticle("1","Groovy is pretty interesting, and so is Erlang"),
-          WikipediaArticle("2","Scala and Java run on the JVM"),
-          WikipediaArticle("3","Scala is not purely functional")
-        )
-      val rdd = sc.parallelize(articles)
-      val index = makeIndex(langs, rdd)
-      val ranked = rankLangsUsingIndex(index)
-      val res = (ranked.head._1 == "Scala")
-      assert(res)
-    }
+    val rdd: RDD[(Int, Iterable[(Posting, Posting)])] =
+      sc.parallelize(List(
+        (question.id, List(
+          (question, answer1),
+          (question, answer2)
+        )))
+      )
 
-  */
+    import testObject.scoredPostings
+    val res = scoredPostings(rdd).collect()
+    assert(res.length == 1)
+    assert(res(0) == (question, 4))
+  }
 }
