@@ -8,11 +8,20 @@ import annotation.tailrec
 import scala.reflect.ClassTag
 
 /** A raw stackoverflow posting, either a question or an answer */
-case class Posting(postingType: Int, id: Int, acceptedAnswer: Option[Int], parentId: Option[Int], score: Int, tags: Option[String]) extends Serializable
+case class Posting(
+    postingType: Int,
+    id: Int,
+    acceptedAnswer: Option[Int],
+    parentId: Option[Int],
+    score: Int, tags:
+    Option[String]
+  ) extends Serializable
 
 
 /** The main class */
 object StackOverflow extends StackOverflow {
+  val Question: Int = 1
+  val Answer: Int = 2
 
   @transient lazy val conf: SparkConf = new SparkConf().setMaster("local").setAppName("StackOverflow")
   @transient lazy val sc: SparkContext = new SparkContext(conf)
@@ -27,8 +36,8 @@ object StackOverflow extends StackOverflow {
     val vectors = vectorPostings(scored)
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 
-    val means   = kmeans(sampleVectors(vectors), vectors, debug = true)
-    val results = clusterResults(means, vectors)
+    val means: Array[(Int, Int)] = kmeans(sampleVectors(vectors), vectors, debug = true)
+    val results: Array[(String, Double, Int, Int)] = clusterResults(means, vectors)
     printResults(results)
   }
 }
@@ -36,6 +45,7 @@ object StackOverflow extends StackOverflow {
 
 /** The parsing and kmeans methods */
 class StackOverflow extends Serializable {
+  import StackOverflow.{Question, Answer}
 
   /** Languages */
   val langs =
@@ -67,18 +77,33 @@ class StackOverflow extends Serializable {
   def rawPostings(lines: RDD[String]): RDD[Posting] =
     lines.map(line => {
       val arr = line.split(",")
-      Posting(postingType =    arr(0).toInt,
-              id =             arr(1).toInt,
-              acceptedAnswer = if (arr(2) == "") None else Some(arr(2).toInt),
-              parentId =       if (arr(3) == "") None else Some(arr(3).toInt),
-              score =          arr(4).toInt,
-              tags =           if (arr.length >= 6) Some(arr(5).intern()) else None)
-    })
+      Posting(
+        postingType =    arr(0).toInt,
+        id =             arr(1).toInt,
+        acceptedAnswer = if (arr(2) == "") None else Some(arr(2).toInt),
+        parentId =       if (arr(3) == "") None else Some(arr(3).toInt),
+        score =          arr(4).toInt,
+        tags =           if (arr.length >= 6) Some(arr(5).intern()) else None)
+      }
+    )
 
 
   /** Group the questions and answers together */
-  def groupedPostings(postings: RDD[Posting]): RDD[(Int, Iterable[(Posting, Posting)])] = {
-    ???
+  def groupedPostings(
+      postings: RDD[Posting]
+    ): RDD[(Int, Iterable[(Posting, Posting)])] = {
+
+    val questions: RDD[(Int, Posting)] = for {
+      q <- postings if q.postingType == Question
+      id = q.id
+    } yield (id, q)
+
+    val answers: RDD[(Int, Posting)] = for {
+      a <- postings if a.postingType == Answer
+      id <- a.parentId
+    } yield (id, a)
+
+    questions join answers groupByKey()
   }
 
 
@@ -87,13 +112,12 @@ class StackOverflow extends Serializable {
 
     def answerHighScore(as: Array[Posting]): Int = {
       var highScore = 0
-          var i = 0
-          while (i < as.length) {
-            val score = as(i).score
-                if (score > highScore)
-                  highScore = score
-                  i += 1
-          }
+        var i = 0
+        while (i < as.length) {
+          val score = as(i).score
+          if (score > highScore) highScore = score
+          i += 1
+        }
       highScore
     }
 
