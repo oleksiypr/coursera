@@ -88,8 +88,28 @@ object TimeUsage {
     * 3. other activities (leisure). These are the columns starting with “t02”, “t04”, “t06”, “t07”, “t08”, “t09”,
     *    “t10”, “t12”, “t13”, “t14”, “t15”, “t16” and “t18” (those which are not part of the previous groups only).
     */
-  def classifiedColumns(columnNames: List[String]): (List[Column], List[Column], List[Column]) = {
-    ???
+  def classifiedColumns(
+    columnNames: List[String]
+  ): (List[Column], List[Column], List[Column]) = {
+
+    val primaryNeeds = List("t01" , "t03", "t11", "t1801", "t1803")
+    val workingActivities = List("t05", "t1805")
+    val otherActivities = List("t02", "t04", "t06", "t07", "t08", "t09", "t10", "t12", "t13", "t14", "t15", "t16", "t18")
+
+    val gropedByActivities: Map[String, List[String]] =
+      columnNames.groupBy {
+        name =>
+          def byPrefix(px: String) = name.startsWith(px)
+          if (primaryNeeds exists byPrefix) "primaryNeeds" else
+          if (workingActivities exists byPrefix) "workingActivities" else
+          if (otherActivities exists byPrefix) "otherActivities" else "N/A"
+      }
+
+    (
+      gropedByActivities("primaryNeeds").map(new ColumnName(_)),
+      gropedByActivities("workingActivities").map(new ColumnName(_)),
+      gropedByActivities("otherActivities").map(new ColumnName(_))
+    )
   }
 
   /** @return a projection of the initial DataFrame such that all columns containing hours spent on primary needs

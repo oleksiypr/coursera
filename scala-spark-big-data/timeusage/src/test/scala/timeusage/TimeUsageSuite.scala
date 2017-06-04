@@ -17,6 +17,8 @@ import scala.util.Random
 class TimeUsageSuite extends FunSuite with BeforeAndAfterAll {
   import TimeUsage._
 
+  override def afterAll(): Unit = spark.stop()
+
   test("dfSchema") {
     assert(
       dfSchema(
@@ -31,5 +33,12 @@ class TimeUsageSuite extends FunSuite with BeforeAndAfterAll {
     )
   }
 
-
+  test("classifiedColumns") {
+    assert(classifiedColumns(List("t01123", "t03512","t051239", "t1251")) ===
+      (
+        List(new ColumnName("t01123"), new ColumnName("t03512")),
+        List(new ColumnName("t051239")),
+        List(new ColumnName("t1251")))
+      )
+  }
 }
