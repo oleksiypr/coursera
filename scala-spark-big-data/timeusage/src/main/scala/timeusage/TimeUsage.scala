@@ -31,6 +31,8 @@ object TimeUsage {
     val (primaryNeedsColumns, workColumns, otherColumns) = classifiedColumns(columns)
     val summaryDf = timeUsageSummary(primaryNeedsColumns, workColumns, otherColumns, initDf)
     val finalDf = timeUsageGrouped(summaryDf)
+    //val finalDf = timeUsageGroupedTyped(summaryDf)
+    //val finalDf = timeUsageGroupedTyped(timeUsageSummaryTyped(summaryDf))
     finalDf.show()
   }
 
@@ -195,9 +197,9 @@ object TimeUsage {
   def timeUsageGrouped(summed: DataFrame): DataFrame = {
     summed.groupBy($"working", $"sex", $"age").
     agg(
-      round(avg('primaryNeeds),1).as("primaryNeeds"),
-      round(avg('work),1).as("work"),
-      round(avg('other),1).as("other")
+      round(avg($"primaryNeeds"), 1).as("primaryNeeds"),
+      round(avg($"work"), 1).as("work"),
+      round(avg($"other"), 1).as("other")
     ).
     orderBy($"working", $"sex", $"age")
   }
@@ -216,7 +218,16 @@ object TimeUsage {
     * @param viewName Name of the SQL view to use
     */
   def timeUsageGroupedSqlQuery(viewName: String): String =
-    ???
+    s"""SELECT
+       |  working, sex, age,
+       |  ROUND(AVG(primaryNeeds),1) as primaryNeeds,
+       |  ROUND(AVG(work),1) as work,
+       |  ROUND(AVG(other),1) as other
+       |FROM $viewName
+       |  GROUP BY working, sex, age
+       |  ORDER BY working, sex, age
+     """.stripMargin
+
 
   /**
     * @return A `Dataset[TimeUsageRow]` from the “untyped” `DataFrame`
@@ -226,7 +237,7 @@ object TimeUsage {
     * cast them at the same time.
     */
   def timeUsageSummaryTyped(timeUsageSummaryDf: DataFrame): Dataset[TimeUsageRow] =
-    ???
+    timeUsageSummaryDf.as[TimeUsageRow]
 
   /**
     * @return Same as `timeUsageGrouped`, but using the typed API when possible
@@ -241,7 +252,24 @@ object TimeUsage {
     */
   def timeUsageGroupedTyped(summed: Dataset[TimeUsageRow]): Dataset[TimeUsageRow] = {
     import org.apache.spark.sql.expressions.scalalang.typed
-    ???
+    def round(x: Double) = (x * 10).round / 10d
+
+    summed
+      .groupByKey(row => (row.working, row.sex, row.age))
+      .agg(
+        avg($"primaryNeeds").as[Double],
+        avg($"work").as[Double],
+        avg($"other").as[Double]
+      ) map { rowAggregated =>
+        val (key, primaryNeeds, work, other) = rowAggregated
+        val (working, sex, age) = key
+        TimeUsageRow(
+          working, sex, age,
+          round(primaryNeeds),
+          round(work),
+          round(other)
+        )
+      } orderBy ($"working", $"sex", $"age")
   }
 }
 
