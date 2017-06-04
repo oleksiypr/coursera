@@ -25,9 +25,9 @@ class TimeUsageSuite extends FunSuite with BeforeAndAfterAll {
         List("str_id", "double_1", "double_2")
       ) == StructType(
         List(
-          StructField("str_id", StringType, nullable = true),
-          StructField("double_1", DoubleType, nullable = true),
-          StructField("double_2", DoubleType, nullable = true)
+          StructField("str_id", StringType, nullable = false),
+          StructField("double_1", DoubleType, nullable = false),
+          StructField("double_2", DoubleType, nullable = false)
         )
       )
     )
