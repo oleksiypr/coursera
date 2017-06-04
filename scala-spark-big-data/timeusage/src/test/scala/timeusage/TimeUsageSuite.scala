@@ -15,5 +15,21 @@ import scala.util.Random
 
 @RunWith(classOf[JUnitRunner])
 class TimeUsageSuite extends FunSuite with BeforeAndAfterAll {
+  import TimeUsage._
+
+  test("dfSchema") {
+    assert(
+      dfSchema(
+        List("str_id", "double_1", "double_2")
+      ) == StructType(
+        List(
+          StructField("str_id", StringType, nullable = true),
+          StructField("double_1", DoubleType, nullable = true),
+          StructField("double_2", DoubleType, nullable = true)
+        )
+      )
+    )
+  }
+
 
 }
