@@ -37,7 +37,7 @@ object Extraction {
     sc.textFile(getClass.getResource(resource).getPath)
       .map(_.split(","))
       .filter { row =>
-        row.length >= 3 &&
+        row.length == 4 &&
         row(2).nonEmpty &&
         row(3).nonEmpty
       }
@@ -51,11 +51,11 @@ object Extraction {
       }
   }
 
-  def observation(resource: String): RDD[Observation] = {
+  def observations(resource: String): RDD[Observation] = {
     sc.textFile(getClass.getResource(resource).getPath)
       .map(_.split(","))
       .filter { row =>
-        row.length >= 4 &&
+        row.length == 5 &&
         row(2).nonEmpty &&
         row(3).nonEmpty &&
         row(4).nonEmpty
@@ -106,16 +106,34 @@ object Extraction {
       temperaturesFile: String
     ): Iterable[(LocalDate, Location, Double)] = {
 
+    val obs = observations(temperaturesFile)
+    val stns = stations(stationsFile)
 
-    ???
+    val res = localizedObservations(obs, stns) map {
+      case (ob, st) => (
+        LocalDate.of(year, ob.month, ob.day),
+        Location(st.lat, st.long),
+        ob.temperature
+      )
+    }
+    res.toLocalIterator.toIterable
   }
 
   /**
     * @param records A sequence containing triplets (date, location, temperature)
     * @return A sequence containing, for each location, the average temperature over the year.
     */
-  def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Double)]): Iterable[(Location, Double)] = {
-    ???
-  }
+  def locationYearlyAverageRecords(
+      records: Iterable[(LocalDate, Location, Double)]
+    ): Iterable[(Location, Double)] = {
 
+    records.groupBy { row =>
+      val (_, location, _) = row
+      location
+    }.mapValues { rows =>
+      val n = rows.size
+      val s = rows.map(_._3).sum
+      s / n
+    }
+  }
 }
