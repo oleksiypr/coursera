@@ -74,6 +74,26 @@ object Extraction {
       }
   }
 
+  def localizedObservations(
+      observations: RDD[Observation],
+      stations: RDD[Station]
+    ): RDD[(Observation, Station)] = {
+
+    val obs = for {
+      ob <- observations
+    } yield {
+      ((ob.stn, ob.wban), ob)
+    }
+
+    val stns = for {
+      st <- stations
+    } yield {
+      ((st.stn, st.wban), st)
+    }
+
+    (obs join stns).values
+  }
+
   /**
     * @param year             Year number
     * @param stationsFile     Path of the stations resource file to use (e.g. "/stations.csv")
