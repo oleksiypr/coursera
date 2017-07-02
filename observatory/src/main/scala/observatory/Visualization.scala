@@ -98,9 +98,33 @@ object Visualization {
     * @param colors Color scale
     * @return A 360×180 image where each pixel shows the predicted temperature at its location
     */
-  def visualize(temperatures: Iterable[(Location, Double)], colors: Iterable[(Double, Color)]): Image = {
-    ???
-  }
+  def visualize(
+      temperatures: Iterable[(Location, Double)],
+      colors: Iterable[(Double, Color)]
+    ): Image = {
 
+    val h = 180
+    val w = 360
+
+    def i(x: Int, y: Int) = w*y + x
+    def location(x: Int, y: Int) = Location(
+      lat = -y +  90.0,
+      lon =  x - 180.0
+    )
+
+    def pixel(location: Location) = {
+      val t = predictTemperature(temperatures, location)
+      val color = interpolateColor(colors, t)
+      Pixel(color.red, color.green, color.blue, 1)
+    }
+
+    val pixels = new Array[Pixel](h*w)
+    for (x <- 0 until w; y <- 0 until h) {
+      val px = pixel(location(x, y))
+      pixels(i(x, y)) = px
+    }
+
+    Image(w, h, pixels)
+  }
 }
 
