@@ -2,7 +2,22 @@ package observatory
 
 object Main extends App {
   import observatory.Extraction._
-  val ts = locateTemperatures(2015, "/stations.csv", "/2015.csv")
-  val result = locationYearlyAverageRecords(ts)
-  //result foreach println
+  import observatory.Visualization.visualize
+
+  val locTemps = locateTemperatures(2015, "/stations.csv", "/2015.csv")
+  val temperatures = locationYearlyAverageRecords(locTemps)
+
+  val colors = List(
+    (+60.0, Color(255,  255,  255)),
+    (+32.0, Color(255,    0,    0)),
+    (+12.0, Color(255,  255,    0)),
+    (  0.0, Color(  0,  255,  255)),
+    (-15.0, Color(  0,    0,  255)),
+    (-27.0, Color(255,    0,  255)),
+    (-50.0, Color( 33,    0,  107)),
+    (-60.0, Color(  0,    0,    0))
+  )
+
+  val img = visualize(temperatures, colors)
+  img.output(new java.io.File("/home/faustenko/Develop/temperature.png"))
 }
