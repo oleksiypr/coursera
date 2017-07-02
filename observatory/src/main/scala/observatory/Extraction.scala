@@ -40,8 +40,7 @@ object Extraction {
         row.length == 4 &&
         row(2).nonEmpty &&
         row(3).nonEmpty
-      }
-      .map { row =>
+      } map { row =>
         Station(
           stn   = row(0),
           wban  = Option(row(1)).filter(_.nonEmpty),
@@ -59,8 +58,7 @@ object Extraction {
         row(2).nonEmpty &&
         row(3).nonEmpty &&
         row(4).nonEmpty
-      }
-      .map { row=>
+      } map { row=>
         Observation(
           stn   = row(0),
           wban  = Option(row(1)).filter(_.nonEmpty),
@@ -130,7 +128,7 @@ object Extraction {
     records.groupBy { row =>
       val (_, location, _) = row
       location
-    }.mapValues { rows =>
+    } mapValues { rows =>
       val n = rows.size
       val s = rows.map(_._3).sum
       s / n
