@@ -55,8 +55,42 @@ object Visualization {
     * @param value The value to interpolate
     * @return The color that corresponds to `value`, according to the color scale defined by `points`
     */
-  def interpolateColor(points: Iterable[(Double, Color)], value: Double): Color = {
-    ???
+  def interpolateColor(
+      points: Iterable[(Double, Color)],
+      value: Double
+    ): Color = {
+
+    import scala.collection.Searching._
+    val sorted = points.toArray.sortBy(_._1)
+    val min = sorted(0)
+    val max = sorted(sorted.length - 1)
+
+    def interpolate(lo: Int, hi:Int)(f: Color => Int) = {
+      val chLo = f(sorted(lo)._2)
+      val chHi = f(sorted(hi)._2)
+
+      val tLo = sorted(lo)._1
+      val tHi = sorted(hi)._1
+      val t   = value
+
+      val ch = (chHi - chLo)*(t - tLo)/(tHi - tLo) + chLo
+      ch.round.toInt
+    }
+
+    if (value >= max._1) max._2 else
+    if (value <  min._1) min._2 else {
+      sorted.map(_._1).search(value) match {
+        case Found(i) => sorted(i)._2
+        case InsertionPoint(hi) =>
+          val lo = hi - 1
+          val interpolateChannel = interpolate(lo, hi)_
+          Color(
+            red   = interpolateChannel(_.red),
+            green = interpolateChannel(_.green),
+            blue  = interpolateChannel(_.blue)
+          )
+      }
+    }
   }
 
   /**

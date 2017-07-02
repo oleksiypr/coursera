@@ -28,4 +28,26 @@ class VisualizationTest extends FunSuite with Checkers {
 
     assert(abs(dtA) < abs(dtB))
   }
+
+  test("interpolateColor for edge cases") {
+    val points = List(
+      (+32.0, Color(255,   0,   0)),
+      (  0.0, Color(  0, 255, 255)),
+      (-27.0, Color(255,   0,   0))
+    )
+    assert(interpolateColor(points, +35.0) == Color(255,   0,   0))
+    assert(interpolateColor(points, +32.0) == Color(255,   0,   0))
+    assert(interpolateColor(points,   0.0) == Color(  0, 255, 255))
+    assert(interpolateColor(points, -27.0) == Color(255,   0,   0))
+    assert(interpolateColor(points, -30.0) == Color(255,   0,   0))
+  }
+
+  test("interpolateColor for common case") {
+    val points = List(
+      (+10.0, Color(255,   0,   0)),
+      (  0.0, Color(  0, 255, 255))
+    )
+
+    assert(interpolateColor(points, +2.0) == Color(51, 204, 204))
+  }
 }
