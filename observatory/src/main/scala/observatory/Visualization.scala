@@ -81,7 +81,8 @@ object Visualization {
     if (value <  min._1) min._2 else {
       sorted.map(_._1).search(value) match {
         case Found(i) => sorted(i)._2
-        case InsertionPoint(hi) =>
+        case InsertionPoint(hi) if hi <= 0 => min._2
+        case InsertionPoint(hi) if hi < sorted.length =>
           val lo = hi - 1
           val interpolateChannel = interpolate(lo, hi)_
           Color(
@@ -89,6 +90,7 @@ object Visualization {
             green = interpolateChannel(_.green),
             blue  = interpolateChannel(_.blue)
           )
+        case InsertionPoint(_) => max._2
       }
     }
   }
@@ -115,7 +117,7 @@ object Visualization {
     def pixel(location: Location) = {
       val t = predictTemperature(temperatures, location)
       val color = interpolateColor(colors, t)
-      Pixel(color.red, color.green, color.blue, 1)
+      Pixel(color.red, color.green, color.blue, alpha = 255)
     }
 
     val pixels = new Array[Pixel](h*w)
