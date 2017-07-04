@@ -4,7 +4,9 @@ object Main extends App {
   import observatory.Extraction._
   import observatory.Visualization.visualize
 
-  val locTemps = locateTemperatures(2015, "/stations.csv", "/2015.csv")
+  System.setProperty("hadoop.home.dir", "D:/dev/sdk/hadoop")
+
+  val locTemps = locateTemperatures(2015, "/stations.csv", "/1982.csv")
   val temperatures = locationYearlyAverageRecords(locTemps)
 
   val colors = List(
@@ -18,6 +20,13 @@ object Main extends App {
     (-60.0, Color(  0,    0,    0))
   )
 
+/*  val temperatures = List(
+    (Location(+45.000, +090.000), +32.0),
+    (Location(-45.000, +090.000), -50.0),
+    (Location(-45.000, -090.000), +32.0),
+    (Location(+45.000, -090.000), -50.0)
+  )*/
+
   val img = visualize(temperatures, colors)
-  img.output(new java.io.File("/home/faustenko/Develop/temperature.png"))
+  img.output(new java.io.File("D:/tmp/temperature.png"))
 }
