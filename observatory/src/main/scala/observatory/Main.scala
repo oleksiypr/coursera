@@ -6,8 +6,7 @@ object Main extends App {
 
   System.setProperty("hadoop.home.dir", "D:/dev/sdk/hadoop")
 
-  val locTemps = locateTemperatures(2015, "/stations.csv", "/1982.csv")
-  val temperatures = locationYearlyAverageRecords(locTemps)
+  //temperatures.take(10).foreach(println)
 
   val colors = List(
     (+60.0, Color(255,  255,  255)),
@@ -27,6 +26,9 @@ object Main extends App {
     (Location(+45.000, -090.000), -50.0)
   )*/
 
+  val locTemps = locateTemperatures(2015, "/stations.csv", "/2015.csv")
+  val temperatures = locationYearlyAverageRecords(locTemps)
+
   val img = visualize(temperatures, colors)
-  img.output(new java.io.File("D:/tmp/temperature.png"))
+  img.output(new java.io.File("D:/tmp/temperature-2015.png"))
 }
