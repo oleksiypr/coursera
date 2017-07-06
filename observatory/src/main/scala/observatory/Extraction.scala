@@ -1,33 +1,22 @@
 package observatory
 
-import java.nio.file.Paths
 import java.time.LocalDate
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.Dataset
+import org.apache.spark.{SparkConf, SparkContext}
 
 case class Station(
     stn: String,
-    wban: String,
-    latitude: Double,
-    longitude: Double
+    wban: Option[String],
+    lat: Double,
+    long: Double
   )
 
 case class Observation(
     stn: String,
-    wban: String,
+    wban: Option[String],
     month: Int,
     day: Int,
     temperature: Double
-  )
-
-case class LocalizedObservation(
-    stn: String,
-    wban: String,
-    month: Int,
-    day: Int,
-    temperature: Double,
-    latitude: Double,
-    longitude: Double
   )
 
 /**
@@ -35,55 +24,43 @@ case class LocalizedObservation(
   */
 object Extraction {
   import org.apache.log4j.{Level, Logger}
-  import org.apache.spark.sql.SparkSession
-
   Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
-  @transient lazy val spark: SparkSession =
-    SparkSession
-      .builder()
-      .appName("ObservatorySession")
-      .config("spark.master", "local")
-      .getOrCreate()
+  @transient lazy val conf: SparkConf = new SparkConf()
+    .setMaster("local")
+    .setAppName("StackOverflow")
 
-  import spark.implicits._
+  @transient lazy val sc: SparkContext = new SparkContext(conf)
 
-  def fsPath(resource: String): String =
-    Paths.get(getClass.getResource(resource).toURI).toString
-
-  def read(resource: String): RDD[String] = spark.sparkContext.textFile(fsPath(resource))
-
-  def stations(resource: String): Dataset[Station] = {
-    val stationsRdd = read(resource)
+  def stations(resource: String): RDD[Station] = {
+    sc.textFile(getClass.getResource(resource).getPath)
       .map(_.split(","))
       .filter { row =>
         row.length == 4 &&
-          row(2).nonEmpty &&
-          row(3).nonEmpty
+        row(2).nonEmpty &&
+        row(3).nonEmpty
       } map { row =>
-      Station(
-        stn   = row(0),
-        wban  = Option(row(1)).filter(_.nonEmpty).getOrElse(""),
-        latitude   = row(2).toDouble,
-        longitude  = row(3).toDouble
-      )
-    }
-
-    stationsRdd.toDF.as[Station]
+        Station(
+          stn   = row(0),
+          wban  = Option(row(1)).filter(_.nonEmpty),
+          lat   = row(2).toDouble,
+          long  = row(3).toDouble
+        )
+      }
   }
 
-  def observations(resource: String): Dataset[Observation] = {
-    val observationsRdd = read(resource)
+  def observations(resource: String): RDD[Observation] = {
+    sc.textFile(getClass.getResource(resource).getPath)
       .map(_.split(","))
       .filter { row =>
         row.length == 5 &&
-          row(2).nonEmpty &&
-          row(3).nonEmpty &&
-          row(4).nonEmpty
+        row(2).nonEmpty &&
+        row(3).nonEmpty &&
+        row(4).nonEmpty
       } map { row=>
         Observation(
           stn   = row(0),
-          wban  = Option(row(1)).filter(_.nonEmpty).getOrElse(""),
+          wban  = Option(row(1)).filter(_.nonEmpty),
           month = row(2).toInt,
           day   = row(3).toInt,
           temperature = {
@@ -92,19 +69,26 @@ object Extraction {
           }
         )
       }
-
-    observationsRdd.toDF.as[Observation]
   }
 
   def localizedObservations(
-     observations: Dataset[Observation],
-     stations: Dataset[Station]
-    ): Dataset[LocalizedObservation] = {
+      observations: RDD[Observation],
+      stations: RDD[Station]
+    ): RDD[(Observation, Station)] = {
 
-    observations.join(
-      stations,
-      Seq("stn", "wban")
-    ).as[LocalizedObservation].persist()
+    val obs = for {
+      ob <- observations
+    } yield {
+      ((ob.stn, ob.wban), ob)
+    }
+
+    val stns = for {
+      st <- stations
+    } yield {
+      ((st.stn, st.wban), st)
+    }
+
+    (obs join stns).values
   }
 
   /**
@@ -122,25 +106,14 @@ object Extraction {
     val obs = observations(temperaturesFile)
     val stns = stations(stationsFile)
 
-    val res =
-      localizedObservations(obs, stns) map {
-        locObs => (
-          (year, locObs.month, locObs.day),
-          Location(locObs.latitude, locObs.longitude),
-          locObs.temperature
-        )
-      }
-
-    new Iterable[(LocalDate, Location, Double)] {
-      def iterator = new Iterator[(LocalDate, Location, Double)] {
-        private[this] val it = res.toLocalIterator()
-        def hasNext: Boolean = it.hasNext
-        def next(): (LocalDate, Location, Double) = {
-          val ((year, month, day), location, temperature) = it.next()
-          (LocalDate.of(year, month, day), location, temperature)
-        }
-      }
+    val res = localizedObservations(obs, stns) map {
+      case (ob, st) => (
+        LocalDate.of(year, ob.month, ob.day),
+        Location(st.lat, st.long),
+        ob.temperature
+      )
     }
+    res.toLocalIterator.toIterable
   }
 
   /**
