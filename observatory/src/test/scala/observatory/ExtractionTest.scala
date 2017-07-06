@@ -26,7 +26,7 @@ class ExtractionTest extends FunSuite with BeforeAndAfterAll {
     )).toDS
 
     val actual =
-      localizedObservationsDs(
+      localizedObservations(
         observations,
         stations
       ).collect().toSet

@@ -53,7 +53,7 @@ object Extraction {
 
   def read(resource: String): RDD[String] = spark.sparkContext.textFile(fsPath(resource))
 
-  def stationsDs(resource: String): Dataset[Station] = {
+  def stations(resource: String): Dataset[Station] = {
     val stationsRdd = read(resource)
       .map(_.split(","))
       .filter { row =>
@@ -72,7 +72,7 @@ object Extraction {
     stationsRdd.toDF.as[Station]
   }
 
-  def observationsDs(resource: String): Dataset[Observation] = {
+  def observations(resource: String): Dataset[Observation] = {
     val observationsRdd = read(resource)
       .map(_.split(","))
       .filter { row =>
@@ -96,7 +96,7 @@ object Extraction {
     observationsRdd.toDF.as[Observation]
   }
 
-  def localizedObservationsDs(
+  def localizedObservations(
      observations: Dataset[Observation],
      stations: Dataset[Station]
     ): Dataset[LocalizedObservation] = {
@@ -119,11 +119,11 @@ object Extraction {
       temperaturesFile: String
     ): Iterable[(LocalDate, Location, Double)] = {
 
-    val obs = observationsDs(temperaturesFile)
-    val stns = stationsDs(stationsFile)
+    val obs = observations(temperaturesFile)
+    val stns = stations(stationsFile)
 
     val res =
-      localizedObservationsDs(obs, stns) map {
+      localizedObservations(obs, stns) map {
         locObs => (
           (year, locObs.month, locObs.day),
           Location(locObs.latitude, locObs.longitude),
