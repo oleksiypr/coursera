@@ -1,8 +1,13 @@
 package observatory
 
+import scala.concurrent.duration.Duration
+
 object Main extends App {
   import observatory.Extraction._
   import observatory.Visualization.visualize
+
+  import scala.concurrent._
+  import ExecutionContext.Implicits.global
 
   System.setProperty("hadoop.home.dir", "D:/dev/sdk/hadoop")
 
@@ -26,9 +31,20 @@ object Main extends App {
     (Location(+45.000, -090.000), -50.0)
   )*/
 
-  val locTemps = locateTemperatures(2015, "/stations.csv", "/2015.csv")
-  val temperatures = locationYearlyAverageRecords(locTemps)
 
-  val img = visualize(temperatures, colors)
-  img.output(new java.io.File("D:/tmp/temperature-2015.png"))
+  private def computeWorldTemperature(year: Int): Future[Unit] = Future  {
+    val locTemps = locateTemperatures(year, "/stations.csv", s"/$year.csv")
+    val temperatures = locationYearlyAverageRecords(locTemps)
+
+    val img = visualize(temperatures, colors)
+    img.output(new java.io.File(s"D:/tmp/temperature-$year.png"))
+  }
+
+  val f1 = computeWorldTemperature(1979)
+  val f2 = computeWorldTemperature(1990)
+  val f3 = computeWorldTemperature(2000)
+  val f4 = computeWorldTemperature(2005)
+
+  val res = Future.sequence(List(f1, f2, f3, f4))
+  Await.result(res, Duration.Inf)
 }
