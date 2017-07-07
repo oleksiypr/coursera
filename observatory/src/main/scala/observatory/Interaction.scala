@@ -1,6 +1,6 @@
 package observatory
 
-import com.sksamuel.scrimage.{Image, Pixel}
+import com.sksamuel.scrimage.Image
 import scala.math._
 
 /**
@@ -32,8 +32,30 @@ object Interaction {
     * @param y Y coordinate
     * @return A 256×256 image showing the contents of the tile defined by `x`, `y` and `zooms`
     */
-  def tile(temperatures: Iterable[(Location, Double)], colors: Iterable[(Double, Color)], zoom: Int, x: Int, y: Int): Image = {
-    ???
+  def tile(
+      temperatures: Iterable[(Location, Double)],
+      colors: Iterable[(Double, Color)],
+      zoom: Int, x: Int, y: Int
+    ): Image = {
+
+    val h = 256
+    val w = 256
+
+    import Visualization.temperaturePixel
+    val pixel = temperaturePixel(temperatures, colors, alpha =  127)_
+
+    def dx(i: Int) = i % w
+    def dy(i: Int) = i / w
+
+    val pxs = (0 until h*w).toParArray map { i =>
+      pixel(tileLocation(
+        zoom + 8,
+        x + dx(i),
+        y + dy(i))
+      )
+    }
+
+    Image(w, h, pxs.seq.toArray)
   }
 
   /**
@@ -47,7 +69,14 @@ object Interaction {
     yearlyData: Iterable[(Int, Data)],
     generateImage: (Int, Int, Int, Int, Data) => Unit
   ): Unit = {
-    ???
-  }
 
+    val _ = for {
+      (year, data) <- yearlyData
+      zoom <- 0 to 3
+      x <- 0 until 1 << zoom
+      y <- 0 until 1 << zoom
+    } {
+      generateImage(year, zoom, x, y, data)
+    }
+  }
 }

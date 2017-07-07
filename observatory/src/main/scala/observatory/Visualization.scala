@@ -95,6 +95,16 @@ object Visualization {
     }
   }
 
+  def temperaturePixel(
+      temperatures: Iterable[(Location, Double)],
+      colors: Iterable[(Double, Color)],
+      alpha: Int = 255
+  )(location: Location): Pixel = {
+    val t = predictTemperature(temperatures, location)
+    val color = interpolateColor(colors, t)
+    Pixel(color.red, color.green, color.blue, alpha = alpha)
+  }
+
   /**
     * @param temperatures Known temperatures
     * @param colors Color scale
@@ -107,18 +117,13 @@ object Visualization {
 
     val h = 180
     val w = 360
+    val pixel = temperaturePixel(temperatures, colors)_
 
     def i(x: Int, y: Int) = w*y + x
     def location(x: Int, y: Int) = Location(
       lat = -y +  90.0,
       lon =  x - 180.0
     )
-
-    def pixel(location: Location) = {
-      val t = predictTemperature(temperatures, location)
-      val color = interpolateColor(colors, t)
-      Pixel(color.red, color.green, color.blue, alpha = 255)
-    }
 
     val pixels = new Array[Pixel](h*w)
     for (x <- 0 until w; y <- 0 until h) {
