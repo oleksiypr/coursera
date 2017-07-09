@@ -2,27 +2,16 @@ package observatory
 
 import java.nio.file.Paths
 import java.time.LocalDate
+
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.{Column, Dataset}
+import org.apache.spark.sql.types.{DoubleType, IntegerType}
 
-case class Station(
-    stn: String,
-    wban: String,
-    latitude: Double,
-    longitude: Double
-  )
 
-case class Observation(
-    stn: String,
-    wban: String,
-    month: Int,
-    day: Int,
-    temperature: Double
-  )
-
+case class Station(id: String, latitude: Double, longitude: Double)
+case class Observation(id: String, month: Int, day: Int, temperature: Double)
 case class LocalizedObservation(
-    stn: String,
-    wban: String,
+    id: String,
     month: Int,
     day: Int,
     temperature: Double,
@@ -36,6 +25,7 @@ case class LocalizedObservation(
 object Extraction {
   import org.apache.log4j.{Level, Logger}
   import org.apache.spark.sql.SparkSession
+  import org.apache.spark.sql.functions._
 
   Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
@@ -53,47 +43,50 @@ object Extraction {
 
   def read(resource: String): RDD[String] = spark.sparkContext.textFile(fsPath(resource))
 
-  def stations(resource: String): Dataset[Station] = {
-    val stationsRdd = read(resource)
-      .map(_.split(","))
-      .filter { row =>
-        row.length == 4 &&
-          row(2).nonEmpty &&
-          row(3).nonEmpty
-      } map { row =>
-      Station(
-        stn   = row(0),
-        wban  = Option(row(1)).filter(_.nonEmpty).getOrElse(""),
-        latitude   = row(2).toDouble,
-        longitude  = row(3).toDouble
-      )
-    }
+  def id: Column = {
+/*    val stn = '_c0
+    val wban = '_c1
+    concat_ws("~", stn, wban) as "id"*/
+    concat_ws("~", coalesce('_c0, lit("")), '_c1).alias("id")
+  }
 
-    stationsRdd.toDF.as[Station]
+  def stations(resource: String): Dataset[Station] = {
+    val stationsDataFrame = spark.read.csv(fsPath(resource))
+
+    stationsDataFrame
+      .select(
+        id,
+        '_c2 as "latitude"  cast DoubleType,
+        '_c3 as "longitude" cast DoubleType
+      )
+      .where(
+        'latitude.isNotNull &&
+        'longitude.isNotNull
+      )
+      .as[Station].where('id contains "")
   }
 
   def observations(resource: String): Dataset[Observation] = {
-    val observationsRdd = read(resource)
-      .map(_.split(","))
-      .filter { row =>
-        row.length == 5 &&
-          row(2).nonEmpty &&
-          row(3).nonEmpty &&
-          row(4).nonEmpty
-      } map { row=>
-        Observation(
-          stn   = row(0),
-          wban  = Option(row(1)).filter(_.nonEmpty).getOrElse(""),
-          month = row(2).toInt,
-          day   = row(3).toInt,
-          temperature = {
-            val fahrenheits = row(4).toDouble
-            (fahrenheits - 32.0) / 1.8
-          }
-        )
-      }
+    val observationsDataFrame = spark.read.csv(fsPath(resource))
 
-    observationsRdd.toDF.as[Observation]
+    val celsius = {
+      val fahrenheits = '_c4 as "temperature" cast DoubleType
+      (fahrenheits - 32.0) / 1.8
+    }
+
+    observationsDataFrame
+      .select(
+        id,
+        '_c2    as "month" cast IntegerType,
+        '_c3    as "day"   cast IntegerType,
+        celsius as "temperature"
+      )
+      .where(
+        'month.isNotNull &&
+        'day.isNotNull &&
+        'temperature.isNotNull
+      )
+      .as[Observation]
   }
 
   def localizedObservations(
@@ -101,10 +94,8 @@ object Extraction {
      stations: Dataset[Station]
     ): Dataset[LocalizedObservation] = {
 
-    observations.join(
-      stations,
-      Seq("stn", "wban")
-    ).as[LocalizedObservation].persist()
+    val joined = observations.join(stations, "id")
+    joined.as[LocalizedObservation].persist()
   }
 
   /**
