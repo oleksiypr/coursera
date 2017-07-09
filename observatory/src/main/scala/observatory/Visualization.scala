@@ -102,7 +102,7 @@ object Visualization {
   )(location: Location): Pixel = {
     val t = predictTemperature(temperatures, location)
     val color = interpolateColor(colors, t)
-    Pixel(color.red, color.green, color.blue, alpha = alpha)
+    Pixel(color.red, color.green, color.blue, alpha)
   }
 
   /**
