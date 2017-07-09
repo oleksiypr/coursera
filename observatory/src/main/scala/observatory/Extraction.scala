@@ -2,22 +2,9 @@ package observatory
 
 import java.nio.file.Paths
 import java.time.LocalDate
-
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Column, Dataset}
 import org.apache.spark.sql.types.{DoubleType, IntegerType}
-
-
-case class Station(id: String, latitude: Double, longitude: Double)
-case class Observation(id: String, month: Int, day: Int, temperature: Double)
-case class LocalizedObservation(
-    id: String,
-    month: Int,
-    day: Int,
-    temperature: Double,
-    latitude: Double,
-    longitude: Double
-  )
 
 /**
   * 1st milestone: data extraction
@@ -44,10 +31,9 @@ object Extraction {
   def read(resource: String): RDD[String] = spark.sparkContext.textFile(fsPath(resource))
 
   def id: Column = {
-/*    val stn = '_c0
-    val wban = '_c1
-    concat_ws("~", stn, wban) as "id"*/
-    concat_ws("~", coalesce('_c0, lit("")), '_c1).alias("id")
+    val stn = $"_c0"
+    val wban = $"_c1"
+    struct(stn, wban).alias("id")
   }
 
   def stations(resource: String): Dataset[Station] = {
@@ -63,7 +49,7 @@ object Extraction {
         'latitude.isNotNull &&
         'longitude.isNotNull
       )
-      .as[Station].where('id contains "")
+      .as[Station]
   }
 
   def observations(resource: String): Dataset[Observation] = {
