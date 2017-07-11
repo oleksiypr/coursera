@@ -50,8 +50,8 @@ object Interaction {
     val pxs = (0 until h*w).toParArray map { i =>
       pixel(tileLocation(
         zoom + 8,
-        x + dx(i),
-        y + dy(i))
+        w*x + dx(i),
+        h*y + dy(i))
       )
     }
 

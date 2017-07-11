@@ -23,9 +23,9 @@ object Main extends App {
   type TemperatureData =  Iterable[(Location, Double)]
 
 
-  //val locTemps = locateTemperatures(2015, "/stations.csv", "/2015.csv")
-  //val temperatures: Iterable[(Location, Double)] = locationYearlyAverageRecords(locTemps)
-  //val yearlyData: Iterable[(Int, TemperatureData)] = List((2015, temperatures))
+  val locTemps = locateTemperatures(2015, "/stations.csv", "/2015.csv")
+  val temperatures: Iterable[(Location, Double)] = locationYearlyAverageRecords(locTemps)
+  val yearlyData: Iterable[(Int, TemperatureData)] = List((2015, temperatures))
 
   /**  “target/temperatures/2015/<zoom>/<x>-<y>.png”
     * Where “<zoom>” is replaced by the zoom level, and “<x>” and “<y>” are replaced by
@@ -43,14 +43,13 @@ object Main extends App {
     img.output(new java.io.File(path))
   }
 
-  val yearlyData: Iterable[(Int, TemperatureData)] =
+/*  val yearlyData: Iterable[(Int, TemperatureData)] =
     List((2015, List(
       (Location(+45.000, +090.000), +30.0),
       (Location(-45.000, +090.000), -20.0),
       (Location(-45.000, -090.000), +30.0),
-      (Location(+45.000, -090.000), -30.0)
-    )))
+      (Location(+45.000, -090.000), -90.0)
+    )))*/
 
-  //Interaction.generateTiles(yearlyData, generateImage)
   Interaction.generateTiles(yearlyData, generateImage)
 }
