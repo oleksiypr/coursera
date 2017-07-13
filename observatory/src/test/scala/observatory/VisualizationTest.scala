@@ -15,7 +15,9 @@ class VisualizationTest extends FunSuite with Checkers {
     val ts = List((Location(0.0, 0.0), 10.0))
     val location = Location(0.0, 0.0)
 
-    assert(predictTemperature(ts, location) == 10.0)
+    val t = predictTemperature(ts, location)
+    println(t)
+    assert(t == 10.0)
   }
 
   test("predictTemperature closer to the closest point") {
@@ -27,6 +29,13 @@ class VisualizationTest extends FunSuite with Checkers {
     val dtB = t - b._2
 
     assert(abs(dtA) < abs(dtB))
+  }
+
+  test("predictTemperature Location(90.0, -180.0)") {
+    val origin = (Location(+0.000,  000.000), +15.0)
+
+    val t = predictTemperature(List(origin), Location(90.0, -180.0))
+    assert(t == 15.0)
   }
 
   test("interpolateColor for edge cases") {

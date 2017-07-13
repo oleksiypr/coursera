@@ -1,5 +1,6 @@
 package observatory
 
+import java.util.Date
 import java.util.concurrent.{Executors, TimeUnit}
 
 object Main extends App {
@@ -22,14 +23,14 @@ object Main extends App {
   type TemperatureData =  Iterable[(Location, Double)]
 
   val locTemps = locateTemperatures(2015, "/stations.csv", "/2015.csv")
-  println("Locate temperatures completed")
+  println(s"${new Date}: Locate temperatures completed")
 
   val temperatures: Iterable[(Location, Double)] = locationYearlyAverageRecords(locTemps)
-  println("Location yearly average records completed")
+  println(s"${new Date}: Location yearly average records completed")
 
   val yearlyData: Iterable[(Int, TemperatureData)] = List((2015, temperatures))
 
-  val executor = Executors.newCachedThreadPool()
+  val executor = Executors.newFixedThreadPool(8)
 
   /**  “target/temperatures/2015/<zoom>/<x>-<y>.png”
     * Where “<zoom>” is replaced by the zoom level, and “<x>” and “<y>” are replaced by
@@ -44,11 +45,11 @@ object Main extends App {
 
     executor.submit(new Runnable() {
       def run(): Unit = {
-        println(s"Started: year = $year, zoom = $zoom, x = $x, y = $y")
+        println(s"${new Date}, ${Thread.currentThread().getName}: Started: year = $year, zoom = $zoom, x = $x, y = $y")
         val path = s"target/temperatures/$year/$zoom/$x-$y.png"
         val img = tile(temperatures, colors, zoom, x, y)
         img.output(new java.io.File(path))
-        println(s"Completed: year = $year, zoom = $zoom, x = $x, y = $y")
+        println(s"${new Date}, ${Thread.currentThread().getName}: Completed: year = $year, zoom = $zoom, x = $x, y = $y")
       }
     })
   }
