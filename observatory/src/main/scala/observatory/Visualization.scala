@@ -33,22 +33,27 @@ object Visualization {
       location: Location
     ): Double = {
 
-    def weight(x: Location) = 1.0 / pow(dist(location, x), p)
-    def closeEnough(x: (Location, Double)) = dist(location, x._1) < minDist
+    def weight(ds: Double) = 1.0 / pow(ds, p)
+    def closeEnough(ds_t: (Double, Double)) = ds_t._1 < minDist
+
+    val distTemperatures = for {
+      (station, t) <- temperatures
+      ds = dist(location, station)
+    } yield (ds, t)
 
     def weighted = {
-      val (sum_wt, sum_w) = temperatures
-        .foldLeft((0.0, 0.0)) { (wtAcc_wAcc, loc_t) =>
+      val (sum_wt, sum_w) = distTemperatures
+        .foldLeft((0.0, 0.0)) { (wtAcc_wAcc, ds_t) =>
           val (wtAcc, wAcc) = wtAcc_wAcc
-          val (loc, t) = loc_t
+          val (ds, t) = ds_t
 
-          val w = weight(loc)
+          val w = weight(ds)
           (wtAcc + w*t, wAcc + w)
         }
       sum_wt / sum_w
     }
 
-    temperatures find closeEnough match {
+    distTemperatures find closeEnough match {
       case Some(lt) => lt._2
       case None => weighted
     }
