@@ -1,11 +1,10 @@
 package observatory
 
-import scala.concurrent.duration.Duration
+import java.util.concurrent.{Executors, TimeUnit}
 
 object Main extends App {
   import Extraction._
   import Interaction._
-  import observatory.Visualization.visualize
 
   System.setProperty("hadoop.home.dir", "D:/dev/sdk/hadoop")
 
@@ -22,10 +21,15 @@ object Main extends App {
 
   type TemperatureData =  Iterable[(Location, Double)]
 
-
   val locTemps = locateTemperatures(2015, "/stations.csv", "/2015.csv")
+  println("Locate temperatures completed")
+
   val temperatures: Iterable[(Location, Double)] = locationYearlyAverageRecords(locTemps)
+  println("Location yearly average records completed")
+
   val yearlyData: Iterable[(Int, TemperatureData)] = List((2015, temperatures))
+
+  val executor = Executors.newCachedThreadPool()
 
   /**  “target/temperatures/2015/<zoom>/<x>-<y>.png”
     * Where “<zoom>” is replaced by the zoom level, and “<x>” and “<y>” are replaced by
@@ -38,9 +42,15 @@ object Main extends App {
     x: Int, y: Int,
     temperatures: Iterable[(Location, Double)]): Unit = {
 
-    val path = s"target/temperatures/$year/$zoom/$x-$y.png"
-    val img = tile(temperatures, colors, zoom, x, y)
-    img.output(new java.io.File(path))
+    executor.submit(new Runnable() {
+      def run(): Unit = {
+        println(s"Started: year = $year, zoom = $zoom, x = $x, y = $y")
+        val path = s"target/temperatures/$year/$zoom/$x-$y.png"
+        val img = tile(temperatures, colors, zoom, x, y)
+        img.output(new java.io.File(path))
+        println(s"Completed: year = $year, zoom = $zoom, x = $x, y = $y")
+      }
+    })
   }
 
 /*  val yearlyData: Iterable[(Int, TemperatureData)] =
@@ -52,4 +62,8 @@ object Main extends App {
     )))*/
 
   Interaction.generateTiles(yearlyData, generateImage)
+
+  executor.shutdown()
+  executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS)
+  Extraction.spark.stop()
 }

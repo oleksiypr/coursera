@@ -81,7 +81,7 @@ object Extraction {
     ): Dataset[LocalizedObservation] = {
 
     val joined = observations.join(stations, "id")
-    joined.as[LocalizedObservation].persist()
+    joined.as[LocalizedObservation]
   }
 
   /**
@@ -99,25 +99,16 @@ object Extraction {
     val obs = observations(temperaturesFile)
     val stns = stations(stationsFile)
 
-    val res =
-      localizedObservations(obs, stns) map {
-        locObs => (
-          (year, locObs.month, locObs.day),
-          Location(locObs.latitude, locObs.longitude),
-          locObs.temperature
-        )
-      }
-
-    new Iterable[(LocalDate, Location, Double)] {
-      def iterator = new Iterator[(LocalDate, Location, Double)] {
-        private[this] val it = res.toLocalIterator()
-        def hasNext: Boolean = it.hasNext
-        def next(): (LocalDate, Location, Double) = {
-          val ((year, month, day), location, temperature) = it.next()
-          (LocalDate.of(year, month, day), location, temperature)
-        }
-      }
-    }
+    localizedObservations(obs, stns).map {
+      locObs => (
+        (year, locObs.month, locObs.day),
+        Location(locObs.latitude, locObs.longitude),
+        locObs.temperature
+      )
+    }.collect().par.map { row =>
+      val ((year, month, day), location, temperature) = row
+      (LocalDate.of(year, month, day), location, temperature)
+    }.seq
   }
 
   /**
@@ -128,7 +119,7 @@ object Extraction {
       records: Iterable[(LocalDate, Location, Double)]
     ): Iterable[(Location, Double)] = {
 
-    records.groupBy { row =>
+    val average = records.par.groupBy { row =>
       val (_, location, _) = row
       location
     } mapValues { rows =>
@@ -136,5 +127,7 @@ object Extraction {
       val s = rows.map(_._3).sum
       s / n
     }
+
+    average.seq
   }
 }

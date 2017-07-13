@@ -37,11 +37,15 @@ object Visualization {
     def closeEnough(x: (Location, Double)) = dist(location, x._1) < minDist
 
     def weighted = {
-      val ws = temperatures.map(t => weight(t._1))
-      val tw = (temperatures.map(_._2) zip ws)
-        .map { case (t, w) => t * w }
+      val (sum_wt, sum_w) = temperatures
+        .foldLeft((0.0, 0.0)) { (wtAcc_wAcc, loc_t) =>
+          val (wtAcc, wAcc) = wtAcc_wAcc
+          val (loc, t) = loc_t
 
-      tw.sum / ws.sum
+          val w = weight(loc)
+          (wtAcc + w*t, wAcc + w)
+        }
+      sum_wt / sum_w
     }
 
     temperatures find closeEnough match {
