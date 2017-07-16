@@ -16,7 +16,6 @@ class VisualizationTest extends FunSuite with Checkers {
     val location = Location(0.0, 0.0)
 
     val t = predictTemperature(ts, location)
-    println(t)
     assert(t == 10.0)
   }
 

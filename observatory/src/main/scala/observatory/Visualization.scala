@@ -16,11 +16,11 @@ object Visualization {
       location2: Location
     ): Double = {
 
-    val w1 = location1.lat.toRadians
-    val w2 = location2.lat.toRadians
-    val dl = (location1.lon - location2.lon).toRadians
+    val φ1 = location1.lat.toRadians
+    val φ2 = location2.lat.toRadians
+    val Δλ = (location1.lon - location2.lon).toRadians
 
-    acos(sin(w1)*sin(w2) + cos(w1)*cos(w2)*cos(dl))
+    acos(sin(φ1)*sin(φ2) + cos(φ1)*cos(φ2)*cos(Δλ))
   }
 
   /**
