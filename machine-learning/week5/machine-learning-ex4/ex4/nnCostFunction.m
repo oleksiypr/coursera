@@ -79,11 +79,10 @@ H = A3;
 
 J = -sum(sum(Y .* log(H) + (1 - Y) .* log(1 - H))) / m;
 
-
-
-
-
-
+Th1 = Theta1(:, 2:end);
+Th2 = Theta2(:, 2:end);
+S = sum(sum(Th1.^2)) + sum(sum(Th2.^2));
+J = J + lambda/(2*m) * S;
 
 
 
