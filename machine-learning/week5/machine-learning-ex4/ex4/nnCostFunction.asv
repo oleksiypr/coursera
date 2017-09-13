@@ -77,25 +77,28 @@ Z3 = A2 * Theta2';
 A3 = sigmoid(Z3);
 H = A3;
 
-J = -sum(Y' * log(H) + (1 - Y)' * log(1 - H)) / m;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+J = -sum(sum(Y .* log(H) + (1 - Y) .* log(1 - H))) / m;
 
 % -------------------------------------------------------------
 
+Th1 = Theta1(:, 2:end);
+Th2 = Theta2(:, 2:end);
+S = sum(sum(Th1.^2)) + sum(sum(Th2.^2));
+J = J + lambda/(2*m) * S;
+
 % =========================================================================
+
+for t = 1:m
+    a1 = [1; X(t, :)'];
+    
+    z2 = Theta1 * a1;
+    a2 = [1; sigmoid(z2)];
+
+    z3 = Thate2 * a2;
+    a3 = sigmoid(z3);
+    
+     
+end
 
 % Unroll gradients
 grad = [Theta1_grad(:) ; Theta2_grad(:)];
