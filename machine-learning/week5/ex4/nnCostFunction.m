@@ -98,7 +98,7 @@ for t = 1:m
     a3 = sigmoid(z3);
     
     delta3 = a3 - Y(t, :)'; 
-    delta2 = (Theta2' * delta3) .* sigmoidGradient([1 ; z2]);
+    delta2 = (Theta2' * delta3) .* sigmoidGradient([1; z2]);
     
     delta2 = delta2(2:end);
     
@@ -106,11 +106,13 @@ for t = 1:m
     Theta2_grad = Theta2_grad + delta3 * a2';     
 end
 
- Theta1_grad = Theta1_grad / m;
- Theta2_grad = Theta2_grad / m;
+Th1 = [zeros(size(Th1, 1), 1) Th1]; % replace first column with zeros for Theta1 matrix 
+Th2 = [zeros(size(Th2, 1), 1) Th2]; % replace first column with zeros for Theta2 matrix
+
+Theta1_grad = (Theta1_grad + lambda * Th1) / m;
+Theta2_grad = (Theta2_grad + lambda * Th2) / m;
 
 % Unroll gradients
 grad = [Theta1_grad(:) ; Theta2_grad(:)];
-
 
 end
