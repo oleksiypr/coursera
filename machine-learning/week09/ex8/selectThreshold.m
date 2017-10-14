@@ -32,7 +32,7 @@ for epsilon = min(pval):stepsize:max(pval)
     prec = tp / (tp + fp);
     rec  = tp / (tp + fn);
     
-    F1 = 2* prec*rec / (prec + rec);
+    F1 = 2 * prec*rec / (prec + rec);
 
     % =============================================================
 
