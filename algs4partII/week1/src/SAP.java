@@ -4,7 +4,11 @@
  *  Description:
  **************************************************************************** */
 
+import edu.princeton.cs.algs4.BreadthFirstDirectedPaths;
 import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.StdIn;
+import edu.princeton.cs.algs4.StdOut;
 
 
 /**
@@ -17,12 +21,14 @@ import edu.princeton.cs.algs4.Digraph;
  */
 public class SAP {
 
+    private final Digraph G;
+
     /**
      * Сonstructor takes a digraph (not necessarily a DAG)
      * @param G a digreph
      */
     public SAP(Digraph G) {
-
+        this.G = new Digraph(G);
     }
 
     /**
@@ -32,7 +38,20 @@ public class SAP {
      * @return length of the SAP
      */
     public int length(int v, int w) {
-        return -1;
+        BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(G, v);
+        BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(G, w);
+
+        int minS = Integer.MAX_VALUE;
+        boolean noWay = true;
+        for (int k = 0; k < G.V(); k++) {
+            if (bfsV.hasPathTo(k) && bfsW.hasPathTo(k)) {
+                noWay = false;
+                int s = bfsV.distTo(k) + bfsW.distTo(k);
+                minS = Math.min(minS, s);
+            }
+        }
+
+        return noWay ? -1 : minS;
     }
 
     /**
@@ -70,6 +89,14 @@ public class SAP {
 
     // do unit testing of this class
     public static void main(String[] args) {
-
+        In in = new In(args[0]);
+        Digraph G = new Digraph(in);
+        SAP sap = new SAP(G);
+        while (!StdIn.isEmpty()) {
+            int v = StdIn.readInt();
+            int w = StdIn.readInt();
+            int length   = sap.length(v, w);
+            StdOut.printf("length = %d\n", length);
+        }
     }
 }
