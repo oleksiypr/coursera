@@ -23,6 +23,49 @@ public class SAP {
 
     private final Digraph G;
 
+    private final class Solver {
+
+        private final int v;
+        private final int w;
+
+        private int length;
+        private int ancestor;
+
+        public Solver(int v, int w) {
+            this.v = v;
+            this.w = w;
+            this.length = Integer.MAX_VALUE;
+            this.ancestor = -1;
+
+            solve();
+        }
+
+        private void solve() {
+            BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(G, v);
+            BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(G, w);
+
+            for (int k = 0; k < G.V(); k++) {
+                if (bfsV.hasPathTo(k) && bfsW.hasPathTo(k)) {
+                    int s = bfsV.distTo(k) + bfsW.distTo(k);
+                    if (s < length) {
+                        length = s;
+                        ancestor = k;
+                    }
+                }
+            }
+
+            if (ancestor == -1) length = -1;
+        }
+
+        int length() {
+            return length;
+        }
+
+        int ancestor() {
+            return ancestor;
+        }
+    }
+
     /**
      * Сonstructor takes a digraph (not necessarily a DAG)
      * @param G a digreph
@@ -38,24 +81,8 @@ public class SAP {
      * @return length of the SAP
      */
     public int length(int v, int w) {
-        BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(G, v);
-        BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(G, w);
-
-        int minS = Integer.MAX_VALUE;
-        int minK = -1;
-        boolean noWay = true;
-        for (int k = 0; k < G.V(); k++) {
-            if (bfsV.hasPathTo(k) && bfsW.hasPathTo(k)) {
-                noWay = false;
-                int s = bfsV.distTo(k) + bfsW.distTo(k);
-                if (s < minS) {
-                    minS = s;
-                    minK = k;
-                }
-            }
-        }
-
-        return noWay ? -1 : minS;
+        Solver s = new Solver(v, w);
+        return s.length();
     }
 
     /**
@@ -66,22 +93,8 @@ public class SAP {
      * @return A common ancestor for the SAP
      */
     public int ancestor(int v, int w) {
-        BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(G, v);
-        BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(G, w);
-
-        int minS = Integer.MAX_VALUE;
-        int minK = -1;
-         for (int k = 0; k < G.V(); k++) {
-            if (bfsV.hasPathTo(k) && bfsW.hasPathTo(k)) {
-                int s = bfsV.distTo(k) + bfsW.distTo(k);
-                if (s < minS) {
-                    minS = s;
-                    minK = k;
-                }
-            }
-        }
-
-        return minK;
+        Solver s = new Solver(v, w);
+        return s.ancestor();
     }
 
     /**
