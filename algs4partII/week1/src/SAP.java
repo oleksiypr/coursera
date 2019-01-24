@@ -42,12 +42,16 @@ public class SAP {
         BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(G, w);
 
         int minS = Integer.MAX_VALUE;
+        int minK = -1;
         boolean noWay = true;
         for (int k = 0; k < G.V(); k++) {
             if (bfsV.hasPathTo(k) && bfsW.hasPathTo(k)) {
                 noWay = false;
                 int s = bfsV.distTo(k) + bfsW.distTo(k);
-                minS = Math.min(minS, s);
+                if (s < minS) {
+                    minS = s;
+                    minK = k;
+                }
             }
         }
 
@@ -62,7 +66,22 @@ public class SAP {
      * @return A common ancestor for the SAP
      */
     public int ancestor(int v, int w) {
-        return -1;
+        BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(G, v);
+        BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(G, w);
+
+        int minS = Integer.MAX_VALUE;
+        int minK = -1;
+         for (int k = 0; k < G.V(); k++) {
+            if (bfsV.hasPathTo(k) && bfsW.hasPathTo(k)) {
+                int s = bfsV.distTo(k) + bfsW.distTo(k);
+                if (s < minS) {
+                    minS = s;
+                    minK = k;
+                }
+            }
+        }
+
+        return minK;
     }
 
     /**
@@ -96,7 +115,8 @@ public class SAP {
             int v = StdIn.readInt();
             int w = StdIn.readInt();
             int length   = sap.length(v, w);
-            StdOut.printf("length = %d\n", length);
+            int ancestor = sap.ancestor(v, w);
+            StdOut.printf("length = %d, ancestor = %d\n", length, ancestor);
         }
     }
 }
