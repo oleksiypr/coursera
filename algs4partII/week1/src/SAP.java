@@ -1,7 +1,7 @@
 /* *****************************************************************************
- *  Name:
- *  Date:
- *  Description:
+ *  Name: Oleksii Prosianko
+ *  Date: 2019/01/24
+ *  Description: Shortest ancestral path solution
  **************************************************************************** */
 
 import edu.princeton.cs.algs4.BreadthFirstDirectedPaths;
@@ -23,46 +23,13 @@ public class SAP {
 
     private final Digraph G;
 
-    private final class Solver {
+    private static final class Solution {
+        public final int length;
+        public final int ancestor;
 
-        private final int v;
-        private final int w;
-
-        private int length;
-        private int ancestor;
-
-        public Solver(int v, int w) {
-            this.v = v;
-            this.w = w;
-            this.length = Integer.MAX_VALUE;
-            this.ancestor = -1;
-
-            solve();
-        }
-
-        private void solve() {
-            BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(G, v);
-            BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(G, w);
-
-            for (int k = 0; k < G.V(); k++) {
-                if (bfsV.hasPathTo(k) && bfsW.hasPathTo(k)) {
-                    int s = bfsV.distTo(k) + bfsW.distTo(k);
-                    if (s < length) {
-                        length = s;
-                        ancestor = k;
-                    }
-                }
-            }
-
-            if (ancestor == -1) length = -1;
-        }
-
-        int length() {
-            return length;
-        }
-
-        int ancestor() {
-            return ancestor;
+        public Solution(int length, int ancestor) {
+            this.length = length;
+            this.ancestor = ancestor;
         }
     }
 
@@ -81,8 +48,7 @@ public class SAP {
      * @return length of the SAP
      */
     public int length(int v, int w) {
-        Solver s = new Solver(v, w);
-        return s.length();
+        return solve(v, w).length;
     }
 
     /**
@@ -93,8 +59,7 @@ public class SAP {
      * @return A common ancestor for the SAP
      */
     public int ancestor(int v, int w) {
-        Solver s = new Solver(v, w);
-        return s.ancestor();
+        return solve(v, w).ancestor;
     }
 
     /**
@@ -117,6 +82,27 @@ public class SAP {
      */
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
         return -1;
+    }
+    
+    private Solution solve(int v, int w) {
+        int length = Integer.MAX_VALUE;
+        int ancestor = -1;
+
+        BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(G, v);
+        BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(G, w);
+
+        for (int k = 0; k < G.V(); k++) {
+            if (bfsV.hasPathTo(k) && bfsW.hasPathTo(k)) {
+                int s = bfsV.distTo(k) + bfsW.distTo(k);
+                if (s < length) {
+                    length = s;
+                    ancestor = k;
+                }
+            }
+        }
+
+        if (ancestor == -1) length = -1;
+        return new Solution(length, ancestor);
     }
 
     // do unit testing of this class
