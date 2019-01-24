@@ -1,9 +1,8 @@
-package week1;
-
 /**
- * WordNet groups words into sets of synonyms called synsets and describes semantic relationships between them. One such 
- * relationship is the is-a relationship, which connects a hyponym (more specific synset) to a hypernym (more general synset). 
- * @author Oleksiy Prosyanko
+ * WordNet groups words into sets of synonyms called synsets and describes
+ * semantic relationships between them. One such relationship is the is-a
+ * relationship, which connects a hyponym (more specific synset) to a hypernym
+ * (more general synset).
  */
 public class WordNet {
 	/**
@@ -42,8 +41,8 @@ public class WordNet {
    }
 
     /**
-     * Define a synset (second field of synsets.txt) that is the common ancestor of nounA and nounB
-     * in a shortest ancestral path (defined below).
+     * Define a synset (second field of synsets.txt) that is the common ancestor
+     * of nounA and nounB in a shortest ancestral path (defined below).
      * @return common ancestor of two nouns
      */
    public String sap(String nounA, String nounB) {
