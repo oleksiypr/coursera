@@ -10,7 +10,6 @@ import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdIn;
 import edu.princeton.cs.algs4.StdOut;
 
-
 /**
  * Shortest ancestral path. An ancestral path between two vertices v and w in a
  * digraph is a directed path from v to a common ancestor x, together with a
@@ -70,7 +69,7 @@ public class SAP {
      * @return length of the SAP
      */
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
-        return -1;
+        return solve(v, w).length;
     }
 
     /**
@@ -81,15 +80,30 @@ public class SAP {
      * @return A common ancestor for the SAP
      */
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
-        return -1;
+        return solve(v, w).ancestor;
     }
     
     private Solution solve(int v, int w) {
-        int length = Integer.MAX_VALUE;
-        int ancestor = -1;
-
         BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(G, v);
         BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(G, w);
+        return solution(bfsV, bfsW);
+    }
+
+
+    private Solution solve(Iterable<Integer> vs, Iterable<Integer> ws) {
+        validate(vs);
+        validate(ws);
+        BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(G, vs);
+        BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(G, ws);
+        return solution(bfsV, bfsW);
+    }
+
+    private Solution solution(
+        BreadthFirstDirectedPaths bfsV,
+        BreadthFirstDirectedPaths bfsW
+    ) {
+        int length = Integer.MAX_VALUE;
+        int ancestor = -1;
 
         for (int k = 0; k < G.V(); k++) {
             if (bfsV.hasPathTo(k) && bfsW.hasPathTo(k)) {
@@ -103,6 +117,16 @@ public class SAP {
 
         if (ancestor == -1) length = -1;
         return new Solution(length, ancestor);
+    }
+
+    private void validate(Iterable<Integer> vs) {
+        if (vs == null) {
+            throw new IllegalArgumentException("argument is null");
+        }
+        for (Integer v : vs) {
+            if (v == null)
+                throw new IllegalArgumentException("vertex is null ");
+        }
     }
 
     // do unit testing of this class
