@@ -89,7 +89,6 @@ public class SAP {
         return solution(bfsV, bfsW);
     }
 
-
     private Solution solve(Iterable<Integer> vs, Iterable<Integer> ws) {
         validate(vs);
         validate(ws);
