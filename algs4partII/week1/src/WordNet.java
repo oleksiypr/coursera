@@ -109,8 +109,4 @@ public class WordNet {
         if (!isNoun(nounA)) throw new IllegalArgumentException("Not a WordNet noun: " + nounA);
         if (!isNoun(nounB)) throw new IllegalArgumentException("Not a WordNet noun: " + nounB);
     }
-
-    // do unit testing of this class
-    public static void main(String[] args) {
-    }
 }
