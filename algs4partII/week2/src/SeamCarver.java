@@ -13,56 +13,129 @@ public class SeamCarver {
     private static class TolologicalSP {
 
         private final double[][] energy;
+        private final int[] edgeTo;
+        private final int V;
+        private final int H;
+        private final int W;
 
-        private TolologicalSP(double[][] energy) {
+        private TolologicalSP(double[][] energy, int H, int W) {
             this.energy = energy;
+            this.H = H;
+            this.W = W;
+            this.V = H*W + 2;
+            this.edgeTo = new int[V];
+            for (int v = 0; v < V; v++) relax(v);
         }
 
         public int[] path() {
-            return null;
-        }
-
-
-        private int from(int v) {
-            int imin = -1;
-            double min = Double.POSITIVE_INFINITY;
-            int[] ins = ins(v);
-            for (int i = 0; i < ins.length; i++) {
-                if (ins[i] < min) {
-                    imin = i;
-                    min = ins[i];
-                }
+            int[] p = new int[H];
+            int w = V - 1;
+            while (edgeTo[w] != 0) {
+                int v = edgeTo[w];
+                int i = i(v);
+                int j = j(v);
+                p[i] = j;
+                w = v;
             }
-            return imin;
-        }
-
-        private int[] ins(int v) {
-            return null;
+            return p;
         }
 
         /**
-         * @param v vertex 1 .. W*H
+         * @param v vertex 0 .. V - 1
+         */
+        private void relax(int v) {
+            if (v == 0) return;
+            int from = to(v);
+            double e = energy(from);
+            int i = i(v);
+            int j = j(v);
+            energy[i][j] += e;
+            edgeTo[v] = from;
+        }
+
+        /**
+         * @param v vertex 1 .. V - 1
+         * @return number of the vertex with lowest energy we came from
+         */
+        private int to(int v) {
+            int kmin = -1;
+            double min = Double.POSITIVE_INFINITY;
+            int[] ins = ins(v);
+            if (ins == null) throw new IllegalArgumentException("ins is null");
+            for (int k = 0; k < ins.length; k++) {
+                double e = energy(ins[k]);
+                if (e < min) {
+                    kmin = k;
+                    min = e;
+                }
+            }
+            return ins[kmin];
+        }
+
+        /**
+         * @param v vertex 0 .. V - 1
+         * @return energy
+         */
+        private double energy(int v) {
+            System.out.println("v = " + v);
+            if (v == 0) return 0.0;
+            if (v == V - 1) {
+                int w = to(v);
+                return energy[i(w)][j(w)];
+            }
+            return energy[i(v)][j(v)];
+        }
+
+        /**
+         * Here by `in` we mean a vertex we came from.
+         * @param v retex 1 .. V - 1
+         * @return array of all `in` verexies
+         */
+        private int[] ins(int v) {
+            if (v > 0 && v <= W) return new int[]{0};
+
+            int i = i(v);
+            int j = j(v);
+            if (j == 0) return
+                new int[] { v(i - 1, j), v(i - 1, j + 1) };
+            if (j == W - 1) return
+                new int[] { v(i - 1, j), v(i - 1, j - 1) };
+            if (i == H - 1) {
+                int[] res = new int[W];
+                for (int k = V - 1 - W; k < V; k++) res[k] = k;
+                return res;
+            }
+
+            return new int[] {
+                v(i - 1, j - 1),
+                v(i - 1, j),
+                v(i - 1, j + 1)
+            };
+        }
+
+        /**
+         * @param v vertex 1 .. V - 2
          * @return i 0 .. H - 1
          */
         private int i(int v) {
-            return -1;
+            return (v - 1) / W;
         }
 
         /**
-         * @param v vertex 1 .. W*H
+         * @param v vertex 1 .. V - 2
          * @return j 0 .. W - 1
          */
         private int j(int v) {
-            return -1;
+            return (v - 1) % W;
         }
 
         /**
          * @param i 0..H - 1
          * @param j 0..W - 1
-         * @return vertex
+         * @return vertex 1 .. V - 2
          */
         private int v(int i, int j) {
-            return -1;
+            return i*W + j + 1;
         }
     }
 
@@ -117,17 +190,19 @@ public class SeamCarver {
      * @return sequence of indices for vertical seam
      */
     public int[] findVerticalSeam() {
-        double[][] energy = new double[height()][width()];
-        for (int y = 0; y < height(); y++)
-            for (int x = 0; x < width(); x++)
+        int H = height();
+        int W = width();
+        double[][] energy = new double[H][W];
+        for (int y = 0; y < H; y++)
+            for (int x = 0; x < W; x++)
                 energy[y][x] = energy(x, y);
 
-        TolologicalSP sp = new TolologicalSP(energy);
+        TolologicalSP sp = new TolologicalSP(energy, H, W);
         return sp.path();
     }
 
     /**
-     * Remove horizontal seam from current picture.
+     * Remove horizontal seam to current picture.
      * @param seam to be removed
      */
     public void removeHorizontalSeam(int[] seam) {
@@ -136,7 +211,7 @@ public class SeamCarver {
     }
 
     /**
-     * Remove vertical seam from current picture.
+     * Remove vertical seam to current picture.
      * @param seam to be removed
      */
     public void removeVerticalSeam(int[] seam) {
