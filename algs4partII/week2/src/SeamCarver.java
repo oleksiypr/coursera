@@ -14,11 +14,13 @@ public class SeamCarver {
 
         private final double[][] energy;
         private final int[] edgeTo;
+        private Double outEenergy;
         private final int V;
         private final int H;
         private final int W;
 
         private TolologicalSP(double[][] energy, int H, int W) {
+            this.outEenergy = 0.0;
             this.energy = energy;
             this.H = H;
             this.W = W;
@@ -45,12 +47,19 @@ public class SeamCarver {
          */
         private void relax(int v) {
             if (v == 0) return;
+
             int from = to(v);
-            double e = energy(from);
+            edgeTo[v] = from;
+            if (v == V - 1) {
+                outEenergy = energy[i(from)][j(from)];
+                return;
+            }
+
             int i = i(v);
             int j = j(v);
+            double e = energy(from);
             energy[i][j] += e;
-            edgeTo[v] = from;
+
         }
 
         /**
@@ -77,12 +86,8 @@ public class SeamCarver {
          * @return energy
          */
         private double energy(int v) {
-            System.out.println("v = " + v);
             if (v == 0) return 0.0;
-            if (v == V - 1) {
-                int w = to(v);
-                return energy[i(w)][j(w)];
-            }
+            if (v == V - 1) return outEenergy;
             return energy[i(v)][j(v)];
         }
 
@@ -93,18 +98,26 @@ public class SeamCarver {
          */
         private int[] ins(int v) {
             if (v > 0 && v <= W) return new int[]{0};
+            if (v == V - 1) {
+                int[] res = new int[W];
+                int bottomBegin = V - 1 - W;
+                int bottomEnd = V - 1;
+                for (int k = bottomBegin; k < bottomEnd; k++) res[j(k)] = k;
+                return res;
+            }
 
             int i = i(v);
             int j = j(v);
-            if (j == 0) return
-                new int[] { v(i - 1, j), v(i - 1, j + 1) };
-            if (j == W - 1) return
-                new int[] { v(i - 1, j), v(i - 1, j - 1) };
-            if (i == H - 1) {
-                int[] res = new int[W];
-                for (int k = V - 1 - W; k < V; k++) res[k] = k;
-                return res;
-            }
+
+            if (j == 0)
+                return new int[] {
+                    v(i - 1, j),
+                    v(i - 1, j + 1) };
+
+            if (j == W - 1)
+                return new int[] {
+                    v(i - 1, j),
+                    v(i - 1, j - 1) };
 
             return new int[] {
                 v(i - 1, j - 1),
