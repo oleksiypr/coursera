@@ -83,7 +83,5 @@ public class PrintSeams {
             StdOut.print(y + " ");
         StdOut.println("}");
         printSeam(carver, horizontalSeam, HORIZONTAL);
-
     }
-
 }

@@ -1,11 +1,21 @@
 /* *****************************************************************************
- *  Name:
- *  Date:
- *  Description:
+ *  Name: Oleksii Prosianko
+ *  Date: 2019/02/04
+ *  Description:  Seam Carving
  **************************************************************************** */
 
 import edu.princeton.cs.algs4.Picture;
 
+/**
+ * Seam-carving is a content-aware image resizing technique where the image is reduced in size by
+ * one pixel of height (or width) at a time. A vertical seam in an image is a path of pixels
+ * connected from the top to the bottom with one pixel in each row. (A horizontal seam is a path of
+ * pixels connected from the left to the right with one pixel in each column.) Below left is the
+ * original 505-by-287 pixel image; below right is the result after removing 150 vertical seams,
+ * resulting in a 30% narrower image. Unlike standard content-agnostic resizing techniques
+ * (e.g. cropping and scaling), the most interesting features (aspect ratio, set of objects present,
+ * etc.) of the image are preserved.
+ */
 public class SeamCarver {
 
     private Picture picture;
@@ -14,7 +24,7 @@ public class SeamCarver {
 
         private final double[][] energy;
         private final int[] edgeTo;
-        private Double outEenergy;
+        private double outEenergy;
         private final int V;
         private final int H;
         private final int W;
@@ -110,7 +120,8 @@ public class SeamCarver {
             int j = j(v);
 
             if (j == 0)
-                return new int[] {
+                if (W == 1) return new int[] {  v(i - 1, j) };
+                else return new int[] {
                     v(i - 1, j),
                     v(i - 1, j + 1) };
 
@@ -187,6 +198,8 @@ public class SeamCarver {
      * @return energy of pixel at column x and row y
      */
     public  double energy(int x, int y) {
+        validateX(x);
+        validateY(y);
         if (x == 0 || x == width() - 1) return 1000.0;
         if (y == 0 || y == height() - 1) return 1000.0;
         return Math.sqrt(d2x(x, y) + d2y(x, y));
@@ -228,7 +241,23 @@ public class SeamCarver {
      * @param seam to be removed
      */
     public void removeVerticalSeam(int[] seam) {
+        if (seam == null) throw new IllegalArgumentException("Seam cannot ne null");
+        if (seam.length != height()) throw new IllegalArgumentException("Seam length should be equsl to " + height());
 
+        Picture p = new Picture(width() - 1, height());
+        for (int y = 0; y < height(); y++) {
+            if (y > 0 && Math.abs(seam[y] - seam[y - 1]) > 1) {
+                throw new IllegalArgumentException("Distance beetwen 2 adjacent seam points more then 1");
+            }
+            for (int x = 0, newX = 0; x < width(); x++) {
+                validateX(seam[y]);
+                if (seam[y] != x) {
+                    p.setRGB(newX, y, picture.getRGB(x, y));
+                    newX++;
+                }
+            }
+        }
+        this.picture = p;
     }
 
     /**
@@ -255,5 +284,15 @@ public class SeamCarver {
         double gy = picture.get(x, y + 1).getGreen() - picture.get(x, y - 1).getGreen();
         double by = picture.get(x, y + 1).getBlue()  - picture.get(x, y - 1).getBlue();
         return ry*ry + gy*gy + by*by;
+    }
+
+    private void validateX(int x) {
+        if (x < 0 || x >= width())
+            throw new IllegalArgumentException("Coordinate x must be between 0 and " + (width() - 1) + ": " + x);
+    }
+
+    private void validateY(int y) {
+        if (y < 0 || y >= height())
+            throw new IllegalArgumentException("Coordinate y must be between 0 and " + (height() - 1) + ": " + y);
     }
 }
