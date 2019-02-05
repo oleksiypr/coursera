@@ -1,6 +1,6 @@
 /* *****************************************************************************
  *  Name: Oleksii Prosianko
- *  Date: 2019/02/04
+ *  Date: 2019/02/05
  *  Description:  Seam Carving
  **************************************************************************** */
 
@@ -178,7 +178,7 @@ public class SeamCarver {
      * @return current picture
      */
     public Picture picture() {
-        return this.picture;
+        return new Picture(this.picture);
     }
 
     /**
@@ -238,6 +238,7 @@ public class SeamCarver {
      * @param seam to be removed
      */
     public void removeHorizontalSeam(int[] seam) {
+        if (seam == null) throw new IllegalArgumentException("Seam cannot ne null");
         transpose();
         removeVerticalSeam(seam);
         transpose();
