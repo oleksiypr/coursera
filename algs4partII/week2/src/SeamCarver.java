@@ -18,16 +18,19 @@ import edu.princeton.cs.algs4.Picture;
  */
 public class SeamCarver {
 
+    private static final double BORDER_ENERGY = 1000.0;
+
     private Picture picture;
+    private boolean isTransposed;
 
     private static class TolologicalSP {
 
         private final double[][] energy;
         private final int[] edgeTo;
-        private double outEenergy;
         private final int V;
         private final int H;
         private final int W;
+        private double outEenergy;
 
         private TolologicalSP(double[][] energy, int H, int W) {
             this.outEenergy = 0.0;
@@ -197,11 +200,11 @@ public class SeamCarver {
      * @param y vertical coordinate 0 .. height - 1
      * @return energy of pixel at column x and row y
      */
-    public  double energy(int x, int y) {
+    public double energy(int x, int y) {
         validateX(x);
         validateY(y);
-        if (x == 0 || x == width() - 1) return 1000.0;
-        if (y == 0 || y == height() - 1) return 1000.0;
+        if (x == 0 || x == width() - 1) return BORDER_ENERGY;
+        if (y == 0 || y == height() - 1) return BORDER_ENERGY;
         return Math.sqrt(d2x(x, y) + d2y(x, y));
     }
 
@@ -209,7 +212,10 @@ public class SeamCarver {
      * @return sequence of indices for horizontal seam
      */
     public int[] findHorizontalSeam() {
-        return null;
+        transpose();
+        int[] horiz = findVerticalSeam();
+        transpose();
+        return horiz;
     }
 
     /**
@@ -232,8 +238,9 @@ public class SeamCarver {
      * @param seam to be removed
      */
     public void removeHorizontalSeam(int[] seam) {
-
-
+        transpose();
+        removeVerticalSeam(seam);
+        transpose();
     }
 
     /**
@@ -271,6 +278,21 @@ public class SeamCarver {
         double gx = picture.get(x + 1, y).getGreen() - picture.get(x - 1, y).getGreen();
         double bx = picture.get(x + 1, y).getBlue()  - picture.get(x - 1, y).getBlue();
         return rx*rx + gx*gx + bx*bx;
+    }
+
+    private void transpose() {
+        int H = height();
+        int W = width();
+        Picture current = picture();
+        Picture transposed = new Picture(H, W);
+
+        for (int y = 0; y < H; y++)
+            for (int x = 0; x < W; x++) {
+                int rgb = current.getRGB(x, y);
+                transposed.setRGB(y, x, rgb);
+            }
+        this.picture = transposed;
+        this.isTransposed = !this.isTransposed;
     }
 
     /**
