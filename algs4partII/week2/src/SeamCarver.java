@@ -1,10 +1,11 @@
 /* *****************************************************************************
  *  Name: Oleksii Prosianko
- *  Date: 2019/02/05
+ *  Date: 2019/02/06
  *  Description:  Seam Carving
  **************************************************************************** */
 
 import edu.princeton.cs.algs4.Picture;
+import java.awt.Color;
 
 /**
  * Seam-carving is a content-aware image resizing technique where the image is reduced in size by
@@ -21,7 +22,6 @@ public class SeamCarver {
     private static final double BORDER_ENERGY = 1000.0;
 
     private Picture picture;
-    private boolean isTransposed;
 
     private static class TolologicalSP {
 
@@ -201,20 +201,15 @@ public class SeamCarver {
      * @return energy of pixel at column x and row y
      */
     public double energy(int x, int y) {
-        validateX(x);
-        validateY(y);
-        if (x == 0 || x == width() - 1) return BORDER_ENERGY;
-        if (y == 0 || y == height() - 1) return BORDER_ENERGY;
-        return Math.sqrt(d2x(x, y) + d2y(x, y));
+        return energy(this.picture, x, y);
     }
 
     /**
      * @return sequence of indices for horizontal seam
      */
     public int[] findHorizontalSeam() {
-        transpose();
-        int[] horiz = findVerticalSeam();
-        transpose();
+        Picture p = transpose(this.picture);
+        int[] horiz = findVerticalSeam(p);
         return horiz;
     }
 
@@ -222,15 +217,7 @@ public class SeamCarver {
      * @return sequence of indices for vertical seam
      */
     public int[] findVerticalSeam() {
-        int H = height();
-        int W = width();
-        double[][] energy = new double[H][W];
-        for (int y = 0; y < H; y++)
-            for (int x = 0; x < W; x++)
-                energy[y][x] = energy(x, y);
-
-        TolologicalSP sp = new TolologicalSP(energy, H, W);
-        return sp.path();
+        return findVerticalSeam(this.picture);
     }
 
     /**
@@ -239,9 +226,8 @@ public class SeamCarver {
      */
     public void removeHorizontalSeam(int[] seam) {
         if (seam == null) throw new IllegalArgumentException("Seam cannot ne null");
-        transpose();
-        removeVerticalSeam(seam);
-        transpose();
+        Picture p = transpose(this.picture);
+        this.picture = transpose(removeVerticalSeam(p, seam));
     }
 
     /**
@@ -249,23 +235,81 @@ public class SeamCarver {
      * @param seam to be removed
      */
     public void removeVerticalSeam(int[] seam) {
-        if (seam == null) throw new IllegalArgumentException("Seam cannot ne null");
-        if (seam.length != height()) throw new IllegalArgumentException("Seam length should be equsl to " + height());
+        this.picture = removeVerticalSeam(this.picture, seam);
+    }
 
-        Picture p = new Picture(width() - 1, height());
-        for (int y = 0; y < height(); y++) {
+    /**
+     * @param p target picture
+     * @return sequence of indices for vertical seam
+     */
+    private int[] findVerticalSeam(Picture p) {
+        int H = p.height();
+        int W = p.width();
+        double[][] energy = new double[H][W];
+        for (int y = 0; y < H; y++)
+            for (int x = 0; x < W; x++)
+                energy[y][x] = energy(p, x, y);
+
+        TolologicalSP sp = new TolologicalSP(energy, H, W);
+        return sp.path();
+    }
+
+    /**
+     * Remove vertical seam to current picture.
+     * @param p original picture
+     * @param seam to be removed
+     * @return new picture with seam removed
+     */
+    private Picture removeVerticalSeam(Picture p, int[] seam) {
+        if (seam == null) throw new IllegalArgumentException("Seam cannot ne null");
+
+        int height = p.height();
+        int width  = p.width();
+
+        if (seam.length != height)
+            throw new IllegalArgumentException(
+                    "Seam length should be equsl to " + height());
+
+        Picture newPicture = new Picture(width - 1, height);
+        for (int y = 0; y < height; y++) {
             if (y > 0 && Math.abs(seam[y] - seam[y - 1]) > 1) {
                 throw new IllegalArgumentException("Distance beetwen 2 adjacent seam points more then 1");
             }
-            for (int x = 0, newX = 0; x < width(); x++) {
-                validateX(seam[y]);
+            for (int x = 0, newX = 0; x < width; x++) {
+                validateX(p, seam[y]);
                 if (seam[y] != x) {
-                    p.setRGB(newX, y, picture.getRGB(x, y));
+                    newPicture.setRGB(newX, y, p.getRGB(x, y));
                     newX++;
                 }
             }
         }
-        this.picture = p;
+        return newPicture;
+    }
+
+    private Picture transpose(Picture p) {
+        int H = p.height();
+        int W = p.width();
+        Picture transposed = new Picture(H, W);
+        for (int y = 0; y < H; y++)
+            for (int x = 0; x < W; x++) {
+                int rgb = p.getRGB(x, y);
+                transposed.setRGB(y, x, rgb);
+            }
+        return transposed;
+    }
+
+    /**
+     * @param p target picture
+     * @param x horizintal coordinate 0 .. width - 1
+     * @param y vertical coordinate 0 .. height - 1
+     * @return energy of pixel at column x and row y
+     */
+    private double energy(Picture p, int x, int y) {
+        validateX(p, x);
+        validateY(p, y);
+        if (x == 0 || x == p.width() - 1) return BORDER_ENERGY;
+        if (y == 0 || y == p.height() - 1) return BORDER_ENERGY;
+        return Math.sqrt(d2x(p, x, y) + d2y(p, x, y));
     }
 
     /**
@@ -274,26 +318,13 @@ public class SeamCarver {
      * @param y vertical coordinate 0 .. height - 1
      * @return square of X gradient
      */
-    private double d2x(int x, int y) {
-        double rx = picture.get(x + 1, y).getRed()   - picture.get(x - 1, y).getRed();
-        double gx = picture.get(x + 1, y).getGreen() - picture.get(x - 1, y).getGreen();
-        double bx = picture.get(x + 1, y).getBlue()  - picture.get(x - 1, y).getBlue();
+    private double d2x(Picture p, int x, int y) {
+        Color right = p.get(x + 1, y);
+        Color left  = p.get(x - 1, y);
+        double rx = right.getRed()   - left.getRed();
+        double gx = right.getGreen() - left.getGreen();
+        double bx = right.getBlue()  - left.getBlue();
         return rx*rx + gx*gx + bx*bx;
-    }
-
-    private void transpose() {
-        int H = height();
-        int W = width();
-        Picture current = picture();
-        Picture transposed = new Picture(H, W);
-
-        for (int y = 0; y < H; y++)
-            for (int x = 0; x < W; x++) {
-                int rgb = current.getRGB(x, y);
-                transposed.setRGB(y, x, rgb);
-            }
-        this.picture = transposed;
-        this.isTransposed = !this.isTransposed;
     }
 
     /**
@@ -302,20 +333,22 @@ public class SeamCarver {
      * @param y vertical coordinate 0 .. height - 1
      * @return square of Y gradient
      */
-    private double d2y(int x, int y) {
-        double ry = picture.get(x, y + 1).getRed()   - picture.get(x, y - 1).getRed();
-        double gy = picture.get(x, y + 1).getGreen() - picture.get(x, y - 1).getGreen();
-        double by = picture.get(x, y + 1).getBlue()  - picture.get(x, y - 1).getBlue();
+    private double d2y(Picture p, int x, int y) {
+        Color below = p.get(x, y + 1);
+        Color above = p.get(x, y - 1);
+        double ry = below.getRed()   - above.getRed();
+        double gy = below.getGreen() - above.getGreen();
+        double by = below.getBlue()  - above.getBlue();
         return ry*ry + gy*gy + by*by;
     }
 
-    private void validateX(int x) {
-        if (x < 0 || x >= width())
+    private void validateX(Picture p, int x) {
+        if (x < 0 || x >= p.width())
             throw new IllegalArgumentException("Coordinate x must be between 0 and " + (width() - 1) + ": " + x);
     }
 
-    private void validateY(int y) {
-        if (y < 0 || y >= height())
+    private void validateY(Picture p, int y) {
+        if (y < 0 || y >= p.height())
             throw new IllegalArgumentException("Coordinate y must be between 0 and " + (height() - 1) + ": " + y);
     }
 }
