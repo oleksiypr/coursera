@@ -5,7 +5,6 @@
  **************************************************************************** */
 
 import edu.princeton.cs.algs4.Picture;
-import java.awt.Color;
 
 /**
  * Seam-carving is a content-aware image resizing technique where the image is reduced in size by
@@ -72,7 +71,6 @@ public class SeamCarver {
             int j = j(v);
             double e = energy(from);
             energy[i][j] += e;
-
         }
 
         /**
@@ -157,8 +155,8 @@ public class SeamCarver {
         }
 
         /**
-         * @param i 0..H - 1
-         * @param j 0..W - 1
+         * @param i 0 .. H - 1
+         * @param j 0 .. W - 1
          * @return vertex 1 .. V - 2
          */
         private int v(int i, int j) {
@@ -208,9 +206,7 @@ public class SeamCarver {
      * @return sequence of indices for horizontal seam
      */
     public int[] findHorizontalSeam() {
-        Picture p = transpose(this.picture);
-        int[] horiz = findVerticalSeam(p);
-        return horiz;
+        return findVerticalSeam(transpose(this.picture));
     }
 
     /**
@@ -226,8 +222,8 @@ public class SeamCarver {
      */
     public void removeHorizontalSeam(int[] seam) {
         if (seam == null) throw new IllegalArgumentException("Seam cannot ne null");
-        Picture p = transpose(this.picture);
-        this.picture = transpose(removeVerticalSeam(p, seam));
+        Picture transposed = transpose(this.picture);
+        this.picture = transpose(removeVerticalSeam(transposed, seam));
     }
 
     /**
@@ -268,12 +264,13 @@ public class SeamCarver {
 
         if (seam.length != height)
             throw new IllegalArgumentException(
-                    "Seam length should be equsl to " + height());
+                "Seam length should be equsl to " + height());
 
         Picture newPicture = new Picture(width - 1, height);
         for (int y = 0; y < height; y++) {
             if (y > 0 && Math.abs(seam[y] - seam[y - 1]) > 1) {
-                throw new IllegalArgumentException("Distance beetwen 2 adjacent seam points more then 1");
+                throw new IllegalArgumentException(
+                    "Distance beetwen 2 adjacent seam points more then 1");
             }
             for (int x = 0, newX = 0; x < width; x++) {
                 validateX(p, seam[y]);
@@ -319,11 +316,13 @@ public class SeamCarver {
      * @return square of X gradient
      */
     private double d2x(Picture p, int x, int y) {
-        Color right = p.get(x + 1, y);
-        Color left  = p.get(x - 1, y);
-        double rx = right.getRed()   - left.getRed();
-        double gx = right.getGreen() - left.getGreen();
-        double bx = right.getBlue()  - left.getBlue();
+        int right = p.getRGB(x + 1, y);
+        int left  = p.getRGB(x - 1, y);
+        
+        double rx =   red(right) -   red(left);
+        double gx = green(right) - green(left);
+        double bx =  blue(right) -  blue(left);
+        
         return rx*rx + gx*gx + bx*bx;
     }
 
@@ -334,21 +333,37 @@ public class SeamCarver {
      * @return square of Y gradient
      */
     private double d2y(Picture p, int x, int y) {
-        Color below = p.get(x, y + 1);
-        Color above = p.get(x, y - 1);
-        double ry = below.getRed()   - above.getRed();
-        double gy = below.getGreen() - above.getGreen();
-        double by = below.getBlue()  - above.getBlue();
+        int below = p.getRGB(x, y + 1);
+        int above = p.getRGB(x, y - 1);
+
+        double ry =   red(below) -   red(above);
+        double gy = green(below) - green(above);
+        double by =  blue(below) -  blue(above);
+        
         return ry*ry + gy*gy + by*by;
     }
-
+    
+    private int red(int rgb) {
+        return (rgb >> 16) & 0xFF; 
+    }
+    
+    private int green(int rgb) {
+        return (rgb >> 8) & 0xFF;
+    }
+    
+    private int blue(int rgb) {
+        return rgb & 0xFF;
+    }
+    
     private void validateX(Picture p, int x) {
         if (x < 0 || x >= p.width())
-            throw new IllegalArgumentException("Coordinate x must be between 0 and " + (width() - 1) + ": " + x);
+            throw new IllegalArgumentException(
+                "Coordinate x must be between 0 and " + (width() - 1) + ": " + x);
     }
 
     private void validateY(Picture p, int y) {
         if (y < 0 || y >= p.height())
-            throw new IllegalArgumentException("Coordinate y must be between 0 and " + (height() - 1) + ": " + y);
+            throw new IllegalArgumentException(
+                "Coordinate y must be between 0 and " + (height() - 1) + ": " + y);
     }
 }
