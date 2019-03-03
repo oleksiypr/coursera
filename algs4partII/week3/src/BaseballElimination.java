@@ -4,6 +4,9 @@
  *  Description: baseball elimination problem
  **************************************************************************** */
 
+import edu.princeton.cs.algs4.FlowEdge;
+import edu.princeton.cs.algs4.FlowNetwork;
+import edu.princeton.cs.algs4.FordFulkerson;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.ST;
 import edu.princeton.cs.algs4.StdOut;
@@ -34,8 +37,6 @@ public class BaseballElimination {
         In in = new In(filename);
         int n =  Integer.parseInt(in.readLine());
 
-        System.out.println("n = " + n);
-
         teams   = new ST<>();
         wins    = new int[n];
         loses   = new int[n];
@@ -44,13 +45,15 @@ public class BaseballElimination {
 
         int i = 0;
         while (!in.isEmpty()) {
-            String[] line = in.readLine().split("\\s+");
+            String row = in.readLine();
+            String[] line = row.trim().split("\\s+");
             teams.put(line[0], i);
             wins[i]      = Integer.parseInt(line[1]);
             loses[i]     = Integer.parseInt(line[2]);
             remaining[i] = Integer.parseInt(line[3]);
-            for (int j = 4; j < n; j++) {
-                g[i][j] = Integer.parseInt(line[j]);
+            for (int k = 4; k < n + 4; k++) {
+                int j = k - 4;
+                g[i][j] = Integer.parseInt(line[k]);
             }
             i++;
         }
@@ -113,9 +116,52 @@ public class BaseballElimination {
 
     /**
      * @param team a team
-     * @return is given team eliminated?
+     * @return true if given team eliminated
      */
     public boolean isEliminated(String team) {
+        System.out.println("!!!" + team);
+        verify(team);
+
+        int k = teams.get(team);
+        if (isTrivialEliminated(k)) return true;
+
+        int n = teams.size();
+        int N = n*n + n;
+        int s = N + 1;
+        int t = N;
+
+        FlowNetwork G = new FlowNetwork(N + 2);
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (i == k || j == k) continue;
+
+                int game = gv(i, j);
+                FlowEdge gameEdge = new FlowEdge(s, game, g[i][j]);
+                G.addEdge(gameEdge);
+
+                FlowEdge result1 = new FlowEdge(game, i, Double.POSITIVE_INFINITY);
+                FlowEdge result2 = new FlowEdge(game, j, Double.POSITIVE_INFINITY);
+                G.addEdge(result1);
+                G.addEdge(result2);
+
+                FlowEdge final1 = new FlowEdge(i, t,
+            wins[k] + remaining[k] - wins[i]);
+
+                FlowEdge final2 = new FlowEdge(j, t,
+            wins[k] + remaining[k] - wins[j]);
+
+                G.addEdge(final1);
+                G.addEdge(final2);
+            }
+        }
+
+        System.out.println(G.toString());
+
+        FordFulkerson ff = new FordFulkerson(G, s, t);
+        for (int i = 0; i< n; i++) {
+            if (i == k) continue;
+            if (ff.inCut(i)) return true;
+        }
         return false;
     }
 
@@ -133,14 +179,35 @@ public class BaseballElimination {
             throw new IllegalArgumentException("No such team");
     }
 
+    private boolean isTrivialEliminated(int k) {
+        for (int i = 0; i < teams.size(); i++) {
+            if (i == k) continue;
+            if (wins[k] + remaining[k] < wins[i]) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Game vertex defined for 2 teams.
+     * Let we have n teams.
+     * @param i one team, 0 <= i < n - 1
+     * @param j other team, i < j <  n
+     * @return game vertice
+     */
+    private int gv(int i, int j) {
+        int n = teams.size();
+        return  n*(i + 1) + j;
+    }
+
     public static void main(String[] args) {
         BaseballElimination division = new BaseballElimination(args[0]);
+        System.out.println(division.against("Atlanta", "Montreal"));
         for (String team : division.teams()) {
             if (division.isEliminated(team)) {
                 StdOut.print(team + " is eliminated by the subset R = { ");
-                for (String t : division.certificateOfElimination(team)) {
+                /*for (String t : division.certificateOfElimination(team)) {
                     StdOut.print(t + " ");
-                }
+                }*/
                 StdOut.println("}");
             }
             else {
