@@ -4,6 +4,7 @@
  *  Description: baseball elimination problem
  **************************************************************************** */
 
+import edu.princeton.cs.algs4.Bag;
 import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FordFulkerson;
@@ -119,46 +120,47 @@ public class BaseballElimination {
      * @return true if given team eliminated
      */
     public boolean isEliminated(String team) {
-        System.out.println("!!!" + team);
         verify(team);
 
-        int k = teams.get(team);
+        final int k = teams.get(team);
         if (isTrivialEliminated(k)) return true;
 
-        int n = teams.size();
-        int N = n*n + n;
-        int s = N + 1;
-        int t = N;
+        final int n = teams.size();
+        final int s = n;
+        final int t = n + 1;
 
-        FlowNetwork G = new FlowNetwork(N + 2);
+        int game = n + 2;
+        Bag<FlowEdge> edges = new Bag<>();
         for (int i = 0; i < n - 1; i++) {
+            if (i == k) continue;
             for (int j = i + 1; j < n; j++) {
-                if (i == k || j == k) continue;
-
-                int game = gv(i, j);
-                FlowEdge gameEdge = new FlowEdge(s, game, g[i][j]);
-                G.addEdge(gameEdge);
-
-                FlowEdge result1 = new FlowEdge(game, i, Double.POSITIVE_INFINITY);
-                FlowEdge result2 = new FlowEdge(game, j, Double.POSITIVE_INFINITY);
-                G.addEdge(result1);
-                G.addEdge(result2);
-
-                FlowEdge final1 = new FlowEdge(i, t,
-            wins[k] + remaining[k] - wins[i]);
-
-                FlowEdge final2 = new FlowEdge(j, t,
-            wins[k] + remaining[k] - wins[j]);
-
-                G.addEdge(final1);
-                G.addEdge(final2);
+                if (j == k) continue;
+                edges.add(new FlowEdge(s, game, g[i][j]));
+                edges.add(new FlowEdge(game, i, Double.POSITIVE_INFINITY));
+                edges.add(new FlowEdge(game, j, Double.POSITIVE_INFINITY));
+                game++;
             }
         }
 
+        for (int i = 0; i < n; i++) {
+            if (i == k) continue;
+            double capacity = wins[k] + remaining[k] - wins[i];
+            edges.add(new FlowEdge(i, t, capacity));
+        }
+
+        int V = game + n + 2;
+        System.out.println("V = " + V);
+        FlowNetwork G = new FlowNetwork(V);
+        for (FlowEdge e: edges) G.addEdge(e);
+
+        /*
+        System.out.println(team);
         System.out.println(G.toString());
+        */
+
 
         FordFulkerson ff = new FordFulkerson(G, s, t);
-        for (int i = 0; i< n; i++) {
+        for (int i = 0; i < n; i++) {
             if (i == k) continue;
             if (ff.inCut(i)) return true;
         }
@@ -187,21 +189,8 @@ public class BaseballElimination {
         return false;
     }
 
-    /**
-     * Game vertex defined for 2 teams.
-     * Let we have n teams.
-     * @param i one team, 0 <= i < n - 1
-     * @param j other team, i < j <  n
-     * @return game vertice
-     */
-    private int gv(int i, int j) {
-        int n = teams.size();
-        return  n*(i + 1) + j;
-    }
-
     public static void main(String[] args) {
         BaseballElimination division = new BaseballElimination(args[0]);
-        System.out.println(division.against("Atlanta", "Montreal"));
         for (String team : division.teams()) {
             if (division.isEliminated(team)) {
                 StdOut.print(team + " is eliminated by the subset R = { ");
