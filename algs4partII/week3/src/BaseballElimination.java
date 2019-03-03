@@ -4,7 +4,6 @@
  *  Description: baseball elimination problem
  **************************************************************************** */
 
-import edu.princeton.cs.algs4.Bag;
 import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FordFulkerson;
@@ -128,16 +127,18 @@ public class BaseballElimination {
         final int n = teams.size();
         final int s = n;
         final int t = n + 1;
+        final int games = (n - 2)*(n - 1)/2;
+        final int V = games + n + 2;
+        FlowNetwork G = new FlowNetwork(V);
 
         int game = n + 2;
-        Bag<FlowEdge> edges = new Bag<>();
         for (int i = 0; i < n - 1; i++) {
             if (i == k) continue;
             for (int j = i + 1; j < n; j++) {
                 if (j == k) continue;
-                edges.add(new FlowEdge(s, game, g[i][j]));
-                edges.add(new FlowEdge(game, i, Double.POSITIVE_INFINITY));
-                edges.add(new FlowEdge(game, j, Double.POSITIVE_INFINITY));
+                G.addEdge(new FlowEdge(s, game, g[i][j]));
+                G.addEdge(new FlowEdge(game, i, Double.POSITIVE_INFINITY));
+                G.addEdge(new FlowEdge(game, j, Double.POSITIVE_INFINITY));
                 game++;
             }
         }
@@ -145,19 +146,8 @@ public class BaseballElimination {
         for (int i = 0; i < n; i++) {
             if (i == k) continue;
             double capacity = wins[k] + remaining[k] - wins[i];
-            edges.add(new FlowEdge(i, t, capacity));
+            G.addEdge(new FlowEdge(i, t, capacity));
         }
-
-        int V = game + n + 2;
-        System.out.println("V = " + V);
-        FlowNetwork G = new FlowNetwork(V);
-        for (FlowEdge e: edges) G.addEdge(e);
-
-        /*
-        System.out.println(team);
-        System.out.println(G.toString());
-        */
-
 
         FordFulkerson ff = new FordFulkerson(G, s, t);
         for (int i = 0; i < n; i++) {
