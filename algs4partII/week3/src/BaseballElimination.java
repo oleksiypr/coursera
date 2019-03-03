@@ -1,15 +1,17 @@
 /* *****************************************************************************
  *  Name: Oleksii Prosianko
- *  Date:
+ *  Date: 2019/03/04
  *  Description: baseball elimination problem
  **************************************************************************** */
 
+import edu.princeton.cs.algs4.Bag;
 import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FordFulkerson;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.ST;
 import edu.princeton.cs.algs4.StdOut;
+import java.util.Collections;
 
 /**
  * In the baseball elimination problem, there is a division consisting of n
@@ -46,6 +48,8 @@ public class BaseballElimination {
         int i = 0;
         while (!in.isEmpty()) {
             String row = in.readLine();
+            if (row == null) continue;
+
             String[] line = row.trim().split("\\s+");
             teams.put(line[0], i);
             wins[i]      = Integer.parseInt(line[1]);
@@ -120,10 +124,57 @@ public class BaseballElimination {
      */
     public boolean isEliminated(String team) {
         verify(team);
+        int k = teams.get(team);
+        return isTrivialEliminated(k) || isNonTriviallyEliminted(k);
+    }
 
-        final int k = teams.get(team);
-        if (isTrivialEliminated(k)) return true;
+    /**
+     * @param team a team
+     * @return subset of teams that eliminates given team; null if not
+     * eliminated
+     */
+    public Iterable<String> certificateOfElimination(String team) {
+        verify(team);
+        int k = teams.get(team);
+        for (String tm: teams.keys()) {
+            int i = teams.get(tm);
+            if (i == k) continue;
+            if (wins[k] + remaining[k] < wins[i]) return Collections.singletonList(tm);
+        }
 
+        Bag<String> eliminates = new Bag<>();
+        FordFulkerson ff = ff(k);
+        for (String tm: teams.keys()) {
+            int i = teams.get(tm);
+            if (i == k) continue;
+            if (ff.inCut(i)) eliminates.add(tm);
+        }
+        return eliminates.isEmpty() ? null : eliminates;
+    }
+
+    private boolean isTrivialEliminated(int k) {
+        for (int i = 0; i < teams.size(); i++) {
+            if (i == k) continue;
+            if (wins[k] + remaining[k] < wins[i]) return true;
+        }
+        return false;
+    }
+
+    private boolean isNonTriviallyEliminted(int k) {
+        FordFulkerson ff = ff(k);
+        for (int i = 0; i < teams.size(); i++) {
+            if (i == k) continue;
+            if (ff.inCut(i)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * The {@link FordFulkerson} instanse to check whether team is eliminated.
+     * @param k a team to be chacked
+     * @return FordFulkerson insatnce
+     */
+    private FordFulkerson ff(int k) {
         final int n = teams.size();
         final int s = n;
         final int t = n + 1;
@@ -149,21 +200,7 @@ public class BaseballElimination {
             G.addEdge(new FlowEdge(i, t, capacity));
         }
 
-        FordFulkerson ff = new FordFulkerson(G, s, t);
-        for (int i = 0; i < n; i++) {
-            if (i == k) continue;
-            if (ff.inCut(i)) return true;
-        }
-        return false;
-    }
-
-    /**
-     * @param team a team
-     * @return subset R of teams that eliminates given team; null if not
-     * eliminated
-     */
-    public Iterable<String> certificateOfElimination(String team) {
-        return null;
+        return new FordFulkerson(G, s, t);
     }
 
     private void verify(String team) {
@@ -171,22 +208,14 @@ public class BaseballElimination {
             throw new IllegalArgumentException("No such team");
     }
 
-    private boolean isTrivialEliminated(int k) {
-        for (int i = 0; i < teams.size(); i++) {
-            if (i == k) continue;
-            if (wins[k] + remaining[k] < wins[i]) return true;
-        }
-        return false;
-    }
-
     public static void main(String[] args) {
         BaseballElimination division = new BaseballElimination(args[0]);
         for (String team : division.teams()) {
             if (division.isEliminated(team)) {
                 StdOut.print(team + " is eliminated by the subset R = { ");
-                /*for (String t : division.certificateOfElimination(team)) {
+                for (String t : division.certificateOfElimination(team)) {
                     StdOut.print(t + " ");
-                }*/
+                }
                 StdOut.println("}");
             }
             else {
