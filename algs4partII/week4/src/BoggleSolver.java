@@ -19,6 +19,7 @@ public class BoggleSolver {
     private final TST<Boolean> dictioanry;
 
     private static class Dice {
+
         public final int i;
         public final int j;
 
