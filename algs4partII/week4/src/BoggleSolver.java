@@ -1,6 +1,6 @@
 /* *****************************************************************************
  *  Name: Oleksii Prosianko
- *  Date: 2019/04/23
+ *  Date: 2019/04/24
  *  Description: boggle solver
  ******************************************************************************/
 
@@ -8,6 +8,7 @@ import edu.princeton.cs.algs4.Bag;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.SET;
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.TST;
 
 /**
  * Boggle solver is immutable data that finds all valid words in a given
@@ -15,7 +16,7 @@ import edu.princeton.cs.algs4.StdOut;
  */
 public class BoggleSolver {
 
-    private final SET<String> dictioanry;
+    private final TST<Boolean> dictioanry;
 
     private static class Dice {
         public final int i;
@@ -59,6 +60,10 @@ public class BoggleSolver {
         private void dfs(int i, int j, String path) {
             marked[i][j] = true;
             path = path + board.getLetter(i, j);
+            if (path.length() > 1 && !isPrefix(path)) {
+                marked[i][j] = false;
+                return;
+            }
             pathes.add(path);
             for (Dice dice: adj(i, j)) {
                 if (!marked[dice.i][dice.j]) {
@@ -102,13 +107,13 @@ public class BoggleSolver {
      * @param dictionary array of strings as the dictionary
      */
     public BoggleSolver(String[] dictionary) {
-        this.dictioanry = new SET<>();
-        for (String s: dictionary) this.dictioanry.add(s);
+        this.dictioanry = new TST<>();
+        for (String s: dictionary) this.dictioanry.put(s, Boolean.TRUE);
     }
 
     /**
      * @param board a bord
-     * @return the set of all valid words in the given Boggle board, as an
+     * @return the set of all valid words in the given Boggle board
      */
     public Iterable<String> getAllValidWords(BoggleBoard board) {
         SET<String> words = new SET<>();
@@ -152,7 +157,7 @@ public class BoggleSolver {
     }
 
     private boolean isPrefix(String str) {
-        return true;
+        return dictioanry.keysWithPrefix(str).iterator().hasNext();
     }
 
 
