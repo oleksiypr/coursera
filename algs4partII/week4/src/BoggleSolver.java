@@ -59,7 +59,7 @@ public class BoggleSolver {
 
         private void dfs(int i, int j, String path) {
             marked[i][j] = true;
-            path = path + board.getLetter(i, j);
+            path = path + getLetter(i, j);
             if (path.length() > 1 && !isPrefix(path)) {
                 marked[i][j] = false;
                 return;
@@ -71,6 +71,12 @@ public class BoggleSolver {
                     marked[dice.i][dice.j] = false;
                 }
             }
+        }
+
+        private String getLetter(int i, int j) {
+            char ch = board.getLetter(i, j);
+            if (ch == 'Q') return "QU";
+            else return Character.toString(ch);
         }
 
         private Bag<Dice> adj(int i, int j) {
@@ -167,11 +173,13 @@ public class BoggleSolver {
         BoggleSolver solver = new BoggleSolver(dictionary);
         BoggleBoard board = new BoggleBoard(args[1]);
         int score = 0;
+        int n = 0;
         for (String word : solver.getAllValidWords(board)) {
             StdOut.println(word);
             score += solver.scoreOf(word);
+            n++;
         }
-        StdOut.println("Score = " + score);
+        StdOut.println("Score = " + score + " n = " + n);
     }
 }
 

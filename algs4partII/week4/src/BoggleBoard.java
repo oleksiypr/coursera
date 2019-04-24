@@ -77,7 +77,7 @@ public class BoggleBoard {
             }
         }
     }
-    
+
     /**
      * Initializes a board from the given filename.
      * @param filename the name of the file containing the Boggle board
@@ -92,7 +92,7 @@ public class BoggleBoard {
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 String letter = in.readString().toUpperCase();
-                if (letter.equals("QU"))
+                if (letter.equals("QU") || letter.equals("Q"))
                     board[i][j] = 'Q';
                 else if (letter.length() != 1)
                     throw new IllegalArgumentException("invalid character: " + letter);
@@ -227,5 +227,4 @@ public class BoggleBoard {
         StdOut.println(board4);
         StdOut.println();
     }
-    
 }
