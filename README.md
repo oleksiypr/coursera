@@ -1,2 +1,2 @@
 # coursera
-A Coursera projects to be stored here 
+Coursera projects stored here 
