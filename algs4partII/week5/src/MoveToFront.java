@@ -26,9 +26,7 @@ public class MoveToFront {
      * standard output.
      */
     public static void encode() {
-        char[] alphabet = new char[R];
-        for (char i = 0; i < R; i++) alphabet[i] = i;
-
+        char[] alphabet = alphabet();
         while (!BinaryStdIn.isEmpty()) {
             char index;
             char in, ch = in = BinaryStdIn.readChar();
@@ -48,9 +46,7 @@ public class MoveToFront {
      * standard output.
      */
     public static void decode() {
-        char[] alphabet = new char[R];
-        for (char i = 0; i < R; i++) alphabet[i] = i;
-
+        char[] alphabet = alphabet();
         while (!BinaryStdIn.isEmpty()) {
             char index = BinaryStdIn.readChar();
             char ch = alphabet[index];
@@ -62,6 +58,12 @@ public class MoveToFront {
             }
         }
         BinaryStdOut.close();
+    }
+
+    private static char[] alphabet() {
+        char[] alphabet = new char[R];
+        for (char i = 0; i < R; i++) alphabet[i] = i;
+        return alphabet;
     }
 
     /**
