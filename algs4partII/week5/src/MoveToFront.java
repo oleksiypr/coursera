@@ -1,7 +1,7 @@
 /* *****************************************************************************
  *  Name: Oleksii Prosianko
  *  Date: 2019/10/11
- *  Description: `encode` solved
+ *  Description: `encode/decode` solved
  **************************************************************************** */
 
 import edu.princeton.cs.algs4.BinaryStdIn;
@@ -48,7 +48,20 @@ public class MoveToFront {
      * standard output.
      */
     public static void decode() {
-        // TODO
+        char[] alphabet = new char[R];
+        for (char i = 0; i < R; i++) alphabet[i] = i;
+
+        while (!BinaryStdIn.isEmpty()) {
+            char index = BinaryStdIn.readChar();
+            char ch = alphabet[index];
+            BinaryStdOut.write(ch);
+            for (int k = 0; k <= index; k++) {
+                char buff = alphabet[k];
+                alphabet[k] = ch;
+                ch = buff;
+            }
+        }
+        BinaryStdOut.close();
     }
 
     /**
