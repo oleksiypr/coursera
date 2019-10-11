@@ -1,8 +1,11 @@
 /* *****************************************************************************
  *  Name: Oleksii Prosianko
- *  Date: 2019/05/05
- *  Description: Initial commit
+ *  Date: 2019/10/11
+ *  Description: `encode` solved
  **************************************************************************** */
+
+import edu.princeton.cs.algs4.BinaryStdIn;
+import edu.princeton.cs.algs4.BinaryStdOut;
 
 /**
  * Move-to-front encoding is to maintain an ordered sequence of the 256 extended
@@ -14,11 +17,30 @@
 public class MoveToFront {
 
     /**
+     * Extended ASCII radix.
+     */
+    private static final int R = 256;
+
+    /**
      * Apply move-to-front encoding, reading from standard input and writing to
      * standard output.
      */
     public static void encode() {
-        // TODO
+        char[] alphabet = new char[R];
+        for (char i = 0; i < R; i++) alphabet[i] = i;
+
+        while (!BinaryStdIn.isEmpty()) {
+            char index;
+            char in, ch = in = BinaryStdIn.readChar();
+            for (index = 0; index < R; index ++) {
+                char current = alphabet[index];
+                alphabet[index] = ch;
+                ch = current;
+                if (in == current) break;
+            }
+            BinaryStdOut.write(index);
+        }
+        BinaryStdOut.close();
     }
 
     /**
@@ -38,6 +60,8 @@ public class MoveToFront {
      *             if args[0] is '+', apply move-to-front decoding
      */
     public static void main(String[] args) {
-        // TODO
+        if      (args[0].equals("-")) encode();
+        else if (args[0].equals("+")) decode();
+        else throw new IllegalArgumentException("Illegal command line argument");
     }
 }
