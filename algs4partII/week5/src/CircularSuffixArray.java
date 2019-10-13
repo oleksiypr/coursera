@@ -4,6 +4,8 @@
  *  Description: Initial commit
  **************************************************************************** */
 
+import edu.princeton.cs.algs4.StdOut;
+
 /**
  * To efficiently implement the key component in the Burrows–Wheeler transform,
  * we will use a fundamental data structure known as the circular suffix array,
@@ -38,6 +40,10 @@ public class CircularSuffixArray {
      * @param s a string
      */
     public CircularSuffixArray(String s) {
+        if (s == null)
+            throw new IllegalArgumentException("argument is null");
+
+
         // TODO
     }
 
@@ -58,12 +64,71 @@ public class CircularSuffixArray {
         return -1;
     }
 
+    private final static class TestCounter {
+        private int tests;
+        private int passed;
+        private int failed;
+
+        void success() {
+            tests++;
+            passed++;
+        }
+
+        void fail() {
+            tests++;
+            failed++;
+        }
+
+        int total() { return tests; }
+        int pussed() { return passed; }
+        int failed() { return failed; }
+    }
+
     /**
      * Unit testing (required). This main() method must call each public method
      * directly and help verify that they work as prescribed (e.g., by printing
      * results to standard output).
      */
     public static void main(String[] args) {
+        TestCounter testCounter = new TestCounter();
 
+        try {
+            new CircularSuffixArray(null);
+            testCounter.fail();
+            StdOut.println("Check for constructor null ==> failed");
+        } catch (IllegalArgumentException ex) {
+            testCounter.success();
+            StdOut.println("Check for constructor null ==> passed");
+        } catch (Throwable th) {
+            testCounter.fail();
+            StdOut.println("Check for constructor null ==> failed");
+        }
+
+        String s = "ABRACADABRA!";
+        int n = s.length();
+        CircularSuffixArray csa = new CircularSuffixArray(s);
+
+        if (csa.length() == n) {
+            testCounter.success();
+            StdOut.printf("Check length passed: csa.length == %d\n", n);
+        } else {
+            testCounter.fail();
+            StdOut.printf("Check length failed: %d != %d\n", csa.length(), n);
+        }
+
+        int[] index = new int[] { 11, 10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2 };
+        for (int i = 0; i < index.length; i++) {
+            int actual = csa.index(i);
+            int expected = index[i];
+            if (actual == expected) testCounter.success();
+            else {
+                testCounter.fail();
+                StdOut.printf("index(%d) ==> failed: %d != %d\n",
+                    i, actual, expected);
+            }
+        }
+
+        StdOut.printf("Testing finished. Total: %d, passed: %d, failed: %d",
+            testCounter.total(), testCounter.pussed(), testCounter.failed());
     }
 }
