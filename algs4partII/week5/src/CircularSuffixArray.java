@@ -35,6 +35,8 @@ import edu.princeton.cs.algs4.StdOut;
  */
 public class CircularSuffixArray {
 
+    private final int n;
+
     /**
      * Circular suffix array of string.
      * @param s a string
@@ -43,7 +45,7 @@ public class CircularSuffixArray {
         if (s == null)
             throw new IllegalArgumentException("argument is null");
 
-
+        n = s.length();
         // TODO
     }
 
@@ -51,8 +53,7 @@ public class CircularSuffixArray {
      * @return length of s
      */
     public int length() {
-        // TODO
-        return -1;
+        return n;
     }
 
     /**
@@ -80,7 +81,7 @@ public class CircularSuffixArray {
         }
 
         int total() { return tests; }
-        int pussed() { return passed; }
+        int passed() { return passed; }
         int failed() { return failed; }
     }
 
@@ -95,13 +96,17 @@ public class CircularSuffixArray {
         try {
             new CircularSuffixArray(null);
             testCounter.fail();
-            StdOut.println("Check for constructor null ==> failed");
+            StdOut.println("Check for constructor null ==> failed: " +
+                "constructor should " +
+                "throw IllegalArgumentException on null argument");
         } catch (IllegalArgumentException ex) {
             testCounter.success();
             StdOut.println("Check for constructor null ==> passed");
         } catch (Throwable th) {
             testCounter.fail();
-            StdOut.println("Check for constructor null ==> failed");
+            StdOut.println("Check for constructor null ==> failed: " +
+                "constructor should " +
+                "throw IllegalArgumentException on null argument");
         }
 
         String s = "ABRACADABRA!";
@@ -110,10 +115,24 @@ public class CircularSuffixArray {
 
         if (csa.length() == n) {
             testCounter.success();
-            StdOut.printf("Check length passed: csa.length == %d\n", n);
+            StdOut.println("Check length ==> passed");
         } else {
             testCounter.fail();
-            StdOut.printf("Check length failed: %d != %d\n", csa.length(), n);
+            StdOut.printf("Check length ==> failed: %d != %d\n", csa.length(), n);
+        }
+
+        try {
+            csa.index(-1);
+            csa.index(n);
+            testCounter.fail();
+            StdOut.println("index out of range ==> failed: index should " +
+                "throw IllegalArgumentException if out of range");
+        } catch (IllegalArgumentException ex) {
+            testCounter.success();
+            StdOut.println("index out of range ==> passed");
+        } catch (Throwable th) {
+            StdOut.println("index out of range ==> failed: index should " +
+                "throw IllegalArgumentException if out of range");
         }
 
         int[] index = new int[] { 11, 10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2 };
@@ -129,6 +148,6 @@ public class CircularSuffixArray {
         }
 
         StdOut.printf("Testing finished. Total: %d, passed: %d, failed: %d",
-            testCounter.total(), testCounter.pussed(), testCounter.failed());
+            testCounter.total(), testCounter.passed(), testCounter.failed());
     }
 }
