@@ -4,6 +4,7 @@
  *  Description: Initial commit
  **************************************************************************** */
 
+import edu.princeton.cs.algs4.Merge;
 import edu.princeton.cs.algs4.StdOut;
 
 /**
@@ -35,18 +36,58 @@ import edu.princeton.cs.algs4.StdOut;
  */
 public class CircularSuffixArray {
 
+    private final String text;
     private final int n;
+    private final CircularSuffix[] suffixes;
+
+    /**
+     * This nested class represents a circular suffix implicitly (via a
+     * reference to the input string and a pointer to the first character in
+     * the circular suffix).
+     */
+    private final class CircularSuffix implements Comparable<CircularSuffix> {
+
+        final int from;
+
+        /**
+         * Implicit suffix array represented by an index to a char of
+         * original text.
+         * @param from index to a char of original text circular suffix starts
+         *             from, [0, n - 1]
+         */
+        CircularSuffix(int from) {
+            this.from = from;
+        }
+
+        @Override
+        public int compareTo(CircularSuffix that) {
+            if (this.from == that.from) return 0;
+            int i = this.from;
+            int j = that.from;
+            for (int count = 0; count < n; count++) {
+                int cmp = Character.compare(text.charAt(i), text.charAt(j));
+                if (cmp != 0) return cmp;
+                i = (i + 1) % n;
+                j = (j + 1) % n;
+            }
+            return 0;
+        }
+    }
 
     /**
      * Circular suffix array of string.
-     * @param s a string
+     * @param text a string
      */
-    public CircularSuffixArray(String s) {
-        if (s == null)
+    public CircularSuffixArray(String text) {
+        if (text == null)
             throw new IllegalArgumentException("argument is null");
 
-        n = s.length();
-        // TODO
+        this.text = text;
+        this.n = text.length();
+
+        this.suffixes = new CircularSuffix[n];
+        for (int i = 0; i < n; i++) suffixes[i] = new CircularSuffix(i);
+        Merge.sort(this.suffixes);
     }
 
     /**
@@ -61,11 +102,13 @@ public class CircularSuffixArray {
      * @return returns index of ith sorted suffix
      */
     public int index(int i) {
-        // TODO
-        return -1;
+        if (i < 0 || i >= n)
+            throw new IllegalArgumentException("Index out of bound");
+
+        return suffixes[i].from;
     }
 
-    private final static class TestCounter {
+    private static final class TestCounter {
         private int tests;
         private int passed;
         private int failed;
@@ -102,12 +145,14 @@ public class CircularSuffixArray {
         } catch (IllegalArgumentException ex) {
             testCounter.success();
             StdOut.println("Check for constructor null ==> passed");
-        } catch (Throwable th) {
+        }
+        // Commented because of Coursera grader restrictions
+        /*catch (Throwable th) {
             testCounter.fail();
             StdOut.println("Check for constructor null ==> failed: " +
                 "constructor should " +
                 "throw IllegalArgumentException on null argument");
-        }
+        }*/
 
         String s = "ABRACADABRA!";
         int n = s.length();
@@ -130,17 +175,22 @@ public class CircularSuffixArray {
         } catch (IllegalArgumentException ex) {
             testCounter.success();
             StdOut.println("index out of range ==> passed");
-        } catch (Throwable th) {
+        }
+        // Commented because of Coursera grader restrictions
+        /*catch (Throwable th) {
+            testCounter.fail();
             StdOut.println("index out of range ==> failed: index should " +
                 "throw IllegalArgumentException if out of range");
-        }
+        }*/
 
         int[] index = new int[] { 11, 10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2 };
         for (int i = 0; i < index.length; i++) {
             int actual = csa.index(i);
             int expected = index[i];
-            if (actual == expected) testCounter.success();
-            else {
+            if (actual == expected) {
+                testCounter.success();
+                StdOut.printf("index(%d) ==> passed\n", i);
+            } else {
                 testCounter.fail();
                 StdOut.printf("index(%d) ==> failed: %d != %d\n",
                     i, actual, expected);
