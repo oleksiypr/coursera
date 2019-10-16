@@ -1,6 +1,6 @@
 /* *****************************************************************************
  *  Name: Oleksii Prosianko
- *  Date: 2019/05/05
+ *  Date: 2019/10/15
  *  Description: Initial commit
  **************************************************************************** */
 
@@ -52,23 +52,23 @@ public class CircularSuffixArray {
         /**
          * Implicit suffix array represented by an index to a char of
          * original text.
-         * @param from index to a char of original text circular suffix starts
+         * @param from index of a char of original text circular suffix starts
          *             from, [0, n - 1]
          */
         CircularSuffix(int from) {
             this.from = from;
         }
 
+        char charAt(int i) {
+            return text.charAt((from + i) % n);
+        }
+
         @Override
         public int compareTo(CircularSuffix that) {
             if (this.from == that.from) return 0;
-            int i = this.from;
-            int j = that.from;
-            for (int count = 0; count < n; count++) {
-                int cmp = Character.compare(text.charAt(i), text.charAt(j));
+            for (int i = 0; i < n; i++) {
+                int cmp = this.charAt(i) - that.charAt(i);
                 if (cmp != 0) return cmp;
-                i = (i + 1) % n;
-                j = (j + 1) % n;
             }
             return 0;
         }
