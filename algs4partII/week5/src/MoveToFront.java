@@ -30,7 +30,7 @@ public class MoveToFront {
         while (!BinaryStdIn.isEmpty()) {
             char index;
             char in, ch = in = BinaryStdIn.readChar();
-            for (index = 0; index < R; index ++) {
+            for (index = 0; index < R; index++) {
                 char current = alphabet[index];
                 alphabet[index] = ch;
                 ch = current;

@@ -1,7 +1,7 @@
 /* *****************************************************************************
  *  Name: Oleksii Prosianko
  *  Date: 2019/10/15
- *  Description: Initial commit
+ *  Description: solved
  **************************************************************************** */
 
 import edu.princeton.cs.algs4.Merge;
