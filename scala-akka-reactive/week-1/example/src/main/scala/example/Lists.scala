@@ -40,12 +40,12 @@ object Lists:
    * @throws java.util.NoSuchElementException if `xs` is an empty list
    */
   def max(xs: List[Int]): Int =
-    if xs.isEmpty then
-      throw new NoSuchElementException
+    if xs.isEmpty then throw new NoSuchElementException
     else
       val head = xs.head
       val tail = xs.tail
-      if (tail.isEmpty) head else max(head, max(tail))
+      if tail.isEmpty then head
+      else max(head, max(tail))
 
   def max(x: Int, y: Int): Int = if (x > y) x else y
 
