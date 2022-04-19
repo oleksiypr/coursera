@@ -23,7 +23,8 @@ object Lists:
    * @return The sum of all elements in `xs`
    */
   def sum(xs: List[Int]): Int =
-    if (xs.isEmpty) 0 else xs.head + sum(xs.tail)
+    if xs.isEmpty then 0
+    else xs.head + sum(xs.tail)
 
   /**
    * This method returns the largest element in a list of integers. If the
@@ -39,7 +40,8 @@ object Lists:
    * @throws java.util.NoSuchElementException if `xs` is an empty list
    */
   def max(xs: List[Int]): Int =
-    if (xs.isEmpty) throw new NoSuchElementException
+    if xs.isEmpty then
+      throw new NoSuchElementException
     else
       val head = xs.head
       val tail = xs.tail
