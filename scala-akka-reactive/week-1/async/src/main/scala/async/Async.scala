@@ -2,7 +2,7 @@ package async
 
 import scala.concurrent.{Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 object Async extends AsyncInterface:
@@ -79,7 +79,13 @@ object Async extends AsyncInterface:
     * Hint: Use a `Promise`
     */
   def futurize(callbackBasedApi: CallbackBasedApi): FutureBasedApi =
-    ???
+    () =>
+      val p = Promise[Int]
+      callbackBasedApi computeIntAsync {
+          case Success(value) => p.success(value)
+          case Failure(th)    => p.failure(th)
+      }
+      p.future
 
 
 /**
