@@ -24,7 +24,9 @@ object Async extends AsyncInterface:
     * should return a successful `Future` with the same value.
     */
   def recoverFailure(eventuallyX: Future[Int]): Future[Int] =
-    ???
+    eventuallyX recover {
+      case _ => -1
+    }
 
   /**
     * Perform two asynchronous computation, one after the other. `makeAsyncComputation2`
