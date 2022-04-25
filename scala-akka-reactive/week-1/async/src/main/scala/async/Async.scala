@@ -41,7 +41,11 @@ object Async extends AsyncInterface:
     makeAsyncComputation1: () => Future[A],
     makeAsyncComputation2: () => Future[B]
   ): Future[(A, B)] =
-    ???
+    for
+      a <- makeAsyncComputation1()
+      b <- makeAsyncComputation2()
+    yield
+      (a, b)
 
   /**
     * Concurrently perform two asynchronous computations and pair their successful
