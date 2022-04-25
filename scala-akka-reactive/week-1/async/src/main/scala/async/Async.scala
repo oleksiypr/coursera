@@ -57,7 +57,7 @@ object Async extends AsyncInterface:
     makeAsyncComputation1: () => Future[A],
     makeAsyncComputation2: () => Future[B]
   ): Future[(A, B)] =
-    ???
+    makeAsyncComputation1() zip makeAsyncComputation2()
 
   /**
     * Attempt to perform an asynchronous computation.
@@ -66,7 +66,10 @@ object Async extends AsyncInterface:
     * are eventually performed.
     */
   def insist[A](makeAsyncComputation: () => Future[A], maxAttempts: Int): Future[A] =
-    ???
+    makeAsyncComputation() recoverWith {
+      case _ if maxAttempts > 1 => insist(makeAsyncComputation, maxAttempts - 1)
+      case e => Future.failed(e)
+    }
 
   /**
     * Turns a callback-based API into a Future-based API
