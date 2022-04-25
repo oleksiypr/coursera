@@ -14,7 +14,7 @@ object Async extends AsyncInterface:
     * should return a failed `Future` with the same error.
     */
   def transformSuccess(eventuallyX: Future[Int]): Future[Boolean] =
-    ???
+    eventuallyX.map(_ % 2 == 0)
 
   /**
     * Transforms a failed asynchronous `Int` computation into a
