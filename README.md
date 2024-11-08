@@ -1,2 +1,2 @@
 # coursera
-Coursera projects stored here 
+Solutions to [Coursera | https://www.coursera.org/] problems 
